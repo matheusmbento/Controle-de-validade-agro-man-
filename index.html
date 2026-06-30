@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gestão de Validades Agro Mané</title>
+<script src="react.min.js"></script>
+<script src="react-dom.min.js"></script>
+<script src="babel.min.js"></script>
+<script src="tailwindcss.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8dc63f">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(r => console.log('SW Registered')).catch(e => console.error('SW Registration Failed', e));
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  /* New Agro Mané Design System */
+  --bg-primary: #0F0F0F;       /* fundo principal (preto profundo) */
+  --bg-surface: #1A1A1A;       /* cards, painéis, modais */
+  --bg-elevated: #242424;      /* inputs, dropdowns, hover states */
+  --accent-green: #8DC63F;     /* cor primária Agro Mané (verde lima) */
+  --accent-green-dark: #6FA832;/* hover do verde */
+  --accent-green-glow: rgba(141,198,63,0.15); /* glow/highlight sutil */
+  --text-primary: #F0F0F0;     /* texto principal */
+  --text-secondary: #A0A0A0;   /* labels, placeholders, subtítulos */
+  --text-muted: #606060;       /* metadados, timestamps */
+  --status-critical: #E53935;  /* crítico (manter vermelho) */
+  --status-warning: #FB8C00;   /* atenção (manter laranja) */
+  --status-ok: #8DC63F;        /* saudável (usar o verde Agro Mané) */
+  --border: #2E2E2E;           /* bordas de cards e separadores */
+
+  /* Mappings to keep existing CSS selectors working */
+  --bg:        var(--bg-primary);
+  --bg2:       var(--bg-surface);
+  --bg3:       var(--bg-elevated);
+  --surface:   var(--bg-surface);
+  --surface2:  var(--bg-elevated);
+  --surface3:  var(--bg-elevated);
+  
+  --yellow:    var(--accent-green);
+  --yellow2:   var(--accent-green-dark);
+  --yellow3:   var(--text-secondary);
+  --yellow-lt: var(--accent-green-glow);
+  --yellow-md: var(--border);
+
+  --red:       var(--status-critical);
+  --red-lt:    rgba(229, 57, 53, 0.1);
+  --red-md:    rgba(229, 57, 53, 0.3);
+  --orange:    var(--status-warning);
+  --ora-lt:    rgba(251, 140, 0, 0.1);
+  --ora-md:    rgba(251, 140, 0, 0.3);
+  --green:     var(--status-ok);
+  --green-lt:  rgba(141, 198, 99, 0.1);
+  --green-md:  rgba(141, 198, 99, 0.3);
+
+  --text:      var(--text-primary);
+  --text2:     var(--text-secondary);
+  --text3:     var(--text-secondary);
+  --muted:     var(--text-muted);
+
+  --border2:   #3E3E3E;
+  --shadow:    0 2px 8px rgba(0,0,0,0.4);
+  --shadow2:   0 4px 20px rgba(0,0,0,0.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* scroll */
+.scr{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.scr::-webkit-scrollbar{width:5px}
+.scr::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* app shell */
+.app{display:grid;grid-template-rows:75px 48px 44px 1fr 36px;height:100vh}
+
+/* ── HEADER ── */
+.header{
+  background:var(--bg-primary);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 24px;gap:16px;
+}
+.header-brand{
+  display:flex;flex-direction:column;
+}
+.header-title{
+  font-size:20px;font-weight:700;
+  color:var(--text-primary);
+  letter-spacing:-.03em;line-height:1.1;
+  font-family:'Inter',sans-serif;
+}
+.header-sub{
+  font-family:'Inter',sans-serif;
+  font-size:9px;color:var(--text-secondary);
+  letter-spacing:.2em;text-transform:uppercase;
+  margin-top:2px;
+}
+.online-pill{
+  margin-left:auto;display:flex;align-items:center;gap:7px;
+  background:rgba(141, 198, 63, 0.1);border:1px solid rgba(141, 198, 63, 0.25);
+  padding:5px 12px;border-radius:20px;
+}
+.online-dot{width:7px;height:7px;background:var(--accent-green);border-radius:50%;animation:pulseGreen 2s infinite}
+@keyframes pulseGreen{0%,100%{box-shadow:0 0 0 0 rgba(141, 198, 63, .5)}50%{box-shadow:0 0 0 5px rgba(141, 198, 63, 0)}}
+.online-lbl{font-size:10px;color:var(--accent-green);font-weight:700;letter-spacing:.1em}
+
+/* ── KPI BAR ── */
+.kpi-bar{
+  background:var(--bg-surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:stretch;
+}
+.kpi{flex:1;padding:12px 18px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--border);background:var(--bg-surface)}
+.kpi:last-child{border-right:none}
+.kpi-icon{font-size:17px}
+.kpi-num{font-family:'Inter',sans-serif;font-size:1.8rem;font-weight:700;line-height:1;color:var(--text-primary)}
+.kpi-lbl{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-secondary);margin-top:1px}
+.kpi.crit .kpi-num{color:var(--status-critical)}
+.kpi.crit .kpi-lbl{color:var(--status-critical)}
+.kpi.warn .kpi-num{color:var(--status-warning)}
+.kpi.warn .kpi-lbl{color:var(--status-warning)}
+.kpi.yel  .kpi-num{color:var(--text-primary)}
+.kpi.yel  .kpi-lbl{color:var(--text-secondary)}
+.kpi.ok   .kpi-num{color:var(--status-ok)}
+.kpi.ok   .kpi-lbl{color:var(--status-ok)}
+
+/* ── TABS ── */
+.tabs{
+  background:var(--bg-surface);
+  border-bottom:1px solid var(--border);
+  display:flex;padding:0 24px;gap:4px;
+  box-shadow:none;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab{
+  padding:0 22px;font-size:12px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+  border:none;background:transparent;cursor:pointer;
+  color:var(--text-secondary);border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:all .2s;
+  font-family:'Inter',sans-serif;height:44px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tab.active{color:var(--accent-green);border-bottom-color:var(--accent-green)}
+.tab:hover:not(.active){color:var(--text-primary)}
+
+/* ── PANELS ── */
+.panel{display:grid;gap:14px;padding:14px;overflow:hidden;height:100%}
+.p2l{grid-template-columns:370px 1fr}
+.p3{grid-template-columns:1fr 1fr 1.5fr}
+.p1rows{grid-template-rows:auto 1fr}
+
+/* ── CARDS ── */
+.card{
+  background:var(--bg-surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  display:flex;flex-direction:column;gap:12px;
+  overflow:hidden;min-height:0;
+  box-shadow:var(--shadow);
+}
+.card-title{
+  font-size:0.72rem;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--text-secondary);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── FORM ── */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{
+  font-size:0.75rem;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-secondary);
+}
+.field input,.field select{
+  background:var(--bg-elevated);
+  border:1.5px solid var(--border);
+  border-radius:6px;padding:10px 14px;
+  color:var(--text-primary);
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:500;
+  transition:.2s;width:100%;
+}
+.field input:focus,.field select:focus{
+  outline:none;
+  border-color:var(--accent-green);
+  box-shadow:0 0 0 3px var(--accent-green-glow);
+}
+.field input::placeholder{color:var(--text-muted)}
+.field select option{background:var(--bg-elevated);color:var(--text-primary)}
+.hint{
+  font-size:12px;margin-top:3px;padding:6px 10px;
+  border-radius:8px;display:flex;align-items:center;gap:6px;font-weight:600;
+}
+.hint.ok  {background:var(--green-lt);color:var(--green);border:1px solid var(--green-md)}
+.hint.warn{background:var(--ora-lt);color:var(--orange);border:1px solid var(--ora-md)}
+.hint.info{background:rgba(29, 78, 216, 0.1);color:#60a5fa;border:1px solid rgba(29, 78, 216, 0.3)}
+.hint.err {background:var(--red-lt);color:var(--red);border:1px solid var(--red-md)}
+
+/* ── BUTTONS ── */
+.btn{
+  border:none;border-radius:6px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-weight:700;
+  transition:all .18s;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  white-space:nowrap;
+}
+.btn-yellow{background:var(--accent-green);color:#0F0F0F;padding:11px 22px;font-size:15px;border-radius:6px}
+.btn-yellow:hover{background:var(--accent-green-dark);transform:translateY(-1px);box-shadow:0 0 12px var(--accent-green-glow)}
+.btn-outline{background:transparent;color:var(--text-secondary);border:2px solid var(--border);padding:9px 16px;font-size:13px}
+.btn-outline:hover{border-color:var(--accent-green-dark);color:var(--text-primary)}
+.btn-ghost{background:var(--bg-elevated);border:1.5px solid var(--border);color:var(--text-secondary);padding:8px 14px;font-size:13px}
+.btn-ghost:hover{border-color:var(--accent-green-dark);color:var(--text-primary)}
+.btn-danger{background:var(--red-lt);border:1px solid var(--red-md);color:var(--red);padding:5px 10px;font-size:12px;border-radius:6px;font-weight:700}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-edit{background:var(--bg-elevated);border:1.5px solid var(--border);color:var(--text-secondary);padding:5px 10px;font-size:12px;border-radius:6px;font-weight:700}
+.btn-edit:hover{border-color:var(--accent-green-dark);color:var(--text-primary)}
+.btn-power{background:var(--bg-elevated);border:1.5px solid var(--border);color:var(--text-secondary);padding:8px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.btn-power:hover{background:var(--red);border-color:var(--red);color:#fff;}
+.btn-config{background:var(--bg-elevated);border:1.5px solid var(--border);color:var(--text-secondary);padding:8px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.btn-config:hover{background:var(--accent-green);border-color:var(--accent-green);color:#0F0F0F;}
+.btn-full{width:100%}
+
+/* ── BADGES ── */
+.badge{
+  padding:3px 8px;border-radius:4px;
+  font-size:0.7rem;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;font-family:'JetBrains Mono',monospace;
+}
+.bdg-crit{background:var(--red-lt);color:var(--red);border:1px solid var(--red-md)}
+.bdg-warn{background:var(--ora-lt);color:var(--orange);border:1px solid var(--ora-md)}
+.bdg-ok  {background:var(--green-lt);color:var(--green);border:1px solid var(--green-md)}
+.cat-tag{
+  padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;
+  background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border);
+}
+
+/* ── ALERTS ── */
+.alert{
+  border-radius:12px;padding:13px 15px;
+  display:flex;align-items:flex-start;gap:11px;
+  font-size:13px;line-height:1.55;flex-shrink:0;
+}
+.alert-red   {background:var(--red-lt);border:1.5px solid var(--red-md);color:var(--red)}
+.alert-orange{background:var(--ora-lt);border:1.5px solid var(--ora-md);color:var(--orange)}
+.alert-yellow{background:var(--yellow-lt);border:1.5px solid var(--border);color:var(--accent-green)}
+.alert-green {background:var(--green-lt);border:1.5px solid var(--green-md);color:var(--green)}
+.alert-icon  {font-size:18px;flex-shrink:0;margin-top:1px}
+
+/* ── TOP10 ── */
+.t10row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.t10row:last-child{border-bottom:none}
+.t10rank{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);width:22px;flex-shrink:0;font-weight:700}
+.t10name{flex:1;font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t10days{font-family:'JetBrains Mono',monospace;font-size:11px;flex-shrink:0;font-weight:700}
+
+/* ── BAR CHART ── */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.bar-lbl{font-size:11px;color:var(--text-secondary);width:100px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.bar-track{flex:1;background:var(--bg-elevated);border-radius:4px;height:9px;overflow:hidden;border:1px solid var(--border)}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.bar-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);width:22px;text-align:right;flex-shrink:0;font-weight:700}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.tbl-wrap::-webkit-scrollbar{width:5px;height:5px}
+.tbl-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+table{width:100%;border-collapse:collapse}
+thead tr{position:sticky;top:0;background:var(--bg-surface);z-index:10}
+th{
+  padding:10px 12px;text-align:left;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-secondary);border-bottom:2px solid var(--border);
+  font-weight:600;white-space:nowrap;
+}
+td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-primary);font-size:14px;vertical-align:middle}
+tr:hover td{background:var(--accent-green-glow)}
+.td-ean{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);font-weight:600}
+.td-name{font-weight:700;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--bg-surface);border:1.5px solid var(--border);border-radius:14px;padding:28px;width:90%;max-width:440px;box-shadow:var(--shadow2)}
+.modal-title{font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--bg-surface);color:var(--text-primary);padding:11px 18px;border-radius:12px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:9px;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:tin .25s ease;border:1px solid var(--border)}
+.toast.tok  {border-left:4px solid var(--accent-green)}
+.toast.terr {border-left:4px solid var(--status-critical)}
+.toast.twarn{border-left:4px solid var(--status-warning)}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── FOOTER ── */
+.footer{background:var(--bg-primary);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 24px}
+.footer span{font-size:11px;color:var(--text-secondary);font-weight:600}
+.footer strong{color:var(--accent-green)}
+
+/* ── FILTERS ── */
+.filter-bar{display:flex;gap:7px;flex-wrap:nowrap;align-items:center;overflow-x:auto;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.fbtn{padding:5px 14px;border-radius:20px;font-size:0.8rem;font-weight:700;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-secondary);cursor:pointer;transition:.2s;font-family:'Inter',sans-serif;white-space:nowrap}
+.fbtn.active{background:var(--accent-green-glow);border-color:var(--accent-green);color:var(--accent-green)}
+.fbtn.active-critical{border-color:#E53935;color:#E53935;background:rgba(229,57,53,0.1)}
+.fbtn.active-warning{border-color:#FB8C00;color:#FB8C00;background:rgba(251,140,0,0.1)}
+.fbtn:hover:not([class*="active"]){border-color:var(--accent-green);color:var(--text-primary)}
+.srch{background:var(--bg-elevated);border:1.5px solid var(--border);border-radius:10px;padding:7px 14px;color:var(--text-primary);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;min-width:180px;flex-shrink:0}
+.srch:focus{outline:none;border-color:var(--accent-green)}
+
+/* ── MISC ── */
+.spin{display:inline-block;width:13px;height:13px;border:2.5px solid rgba(255,255,255,.2);border-top-color:var(--accent-green);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;padding:20px;text-align:center}
+.empty-icon{font-size:38px;opacity:.25}
+.empty p{font-size:14px;color:var(--text-muted);font-weight:600}
+.tbl-foot{padding:8px 14px;border-top:1.5px solid var(--border);background:var(--bg-surface);font-size:12px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-weight:600;flex-shrink:0}
+.guide-step{display:flex;gap:11px;padding:11px;background:var(--bg-elevated);border-radius:10px;border:1px solid var(--border)}
+.guide-num{width:26px;height:26px;background:var(--accent-green-glow);border:2px solid var(--accent-green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-green);flex-shrink:0;font-weight:700}
+.insight-block{border-radius:12px;padding:14px 16px;margin-bottom:10px;flex-shrink:0}
+.insight-block h4{font-size:13px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.insight-block p{font-size:12px;line-height:1.6;font-weight:500}
+.insight-block ul{margin-top:5px;padding-left:16px;font-size:12px;line-height:1.8;font-weight:500}
+
+/* ── PRINT ETIQUETAS ── */
+@media print {
+  @page { size: 60mm 40mm; margin: 0; }
+  body * { visibility: hidden !important; }
+  #print-area, #print-area * { visibility: visible !important; }
+  #print-area { display: flex !important; position: absolute; left: 0; top: 0; width: 60mm; height: 40mm; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px dashed #ccc; padding: 2mm; box-sizing: border-box; background: #fff; }
+  .no-print { display: none !important; }
+}
+@media screen {
+  #print-area { display: none; }
+}
+
+/* ── RESPONSIVO / MOBILE ── */
+@media (max-width: 768px) {
+  /* Libera o scroll nativo do navegador para esconder a barra de endereço */
+  html, body, #root { height: auto !important; min-height: 100vh; overflow: visible !important; }
+  
+  /* Transforma a estrutura raiz de Grid (fixo) para Flex (expansível) */
+  .app { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    height: auto !important; 
+    min-height: 100vh; 
+  }
+  
+  /* Transforma grids em colunas flexíveis */
+  .panel, .p2l, .p3 { 
+    height: auto !important; 
+    overflow: visible !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+  }
+  
+  /* Permite que os cards cresçam o quanto precisarem */
+  .card, .scr { 
+    min-height: auto !important; 
+    overflow: visible !important; 
+  }
+
+  /* No mobile, o foco é 100% na captura. Esconde navegação. */
+  .tabs, .kpi-bar { display: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
+
+/* ══════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════ */
+const LS_STOCK = 'agromane_stock_v1';
+const LS_DICT  = 'agromane_dict_v1';
+
+const CATS = [
+  'Farmácia',
+  'Rações de Cães',
+  'Rações de Gatos',
+  'Petiscos',
+  'Higiêne e Beleza',
+  'Piscina',
+  'Jardim',
+  'Aves e Roedores',
+];
+
+/* ══════════════════════════════════════════════════════
+   STORAGE  — Migrado para API / SQLite via Node.js
+══════════════════════════════════════════════════════ */
+const API_URL = '/api';
+const db = {
+  loadStock: async () => { try { const r = await fetch(`${API_URL}/stock`); return await r.json() } catch { return [] } },
+  addItem: async (item) => fetch(`${API_URL}/stock`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item) }),
+  updateItem: async (item) => fetch(`${API_URL}/stock/${item.id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item) }),
+  deleteItem: async (id) => fetch(`${API_URL}/stock/${id}`, { method:'DELETE' }),
+  baixarItem: async (id, tipo_baixa, quantidade, usuario) => fetch(`${API_URL}/estoque/baixar`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, tipo_baixa, quantidade, usuario}) }),
+  ajusteSaudavel: async (id, qtd_fisica, qtd_vendida, usuario) => fetch(`${API_URL}/estoque/ajuste-saudavel`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, qtd_fisica, qtd_vendida, usuario}) }),
+  loadBaixas: async () => { try { const r = await fetch(`${API_URL}/relatorios/baixas`); return await r.json() } catch { return [] } },
+  loadPerdas: async (start, end) => { try { const q = start && end ? `?start=${start}&end=${end}` : ''; const r = await fetch(`${API_URL}/relatorios/perdas-detalhadas${q}`); return await r.json() } catch { return [] } },
+  loadGanhos: async (start, end) => { try { const q = start && end ? `?start=${start}&end=${end}` : ''; const r = await fetch(`${API_URL}/relatorios/ganhos-detalhados${q}`); return await r.json() } catch { return [] } },
+  loadConfig: async () => { try { const r = await fetch(`${API_URL}/config`); return await r.json() } catch { return {} } },
+  saveConfig: async (key, value) => fetch(`${API_URL}/config`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({key, value}) }),
+  testAlert: async () => fetch(`${API_URL}/test-alert`, { method:'POST' }),
+  testBackup: async () => fetch(`${API_URL}/test-backup`, { method:'POST' }),
+  importJson: async (items) => fetch(`${API_URL}/estoque/importar-json`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(items) }),
+  sendMessage: async (text) => fetch(`${API_URL}/send-message`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text}) }),
+  lookupEan: async (code) => { try { const r = await fetch(`${API_URL}/lookup-ean/${code}`); const d = await r.json(); return d.name; } catch { return null; } },
+  loadDict: async () => { try { const r = await fetch(`${API_URL}/dict`); return await r.json() } catch { return {} } },
+  addDict: async (ean, name) => fetch(`${API_URL}/dict`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ean, name}) })
+};
+
+/* ══════════════════════════════════════════════════════
+   DATE HELPERS
+══════════════════════════════════════════════════════ */
+const today    = () => { const d = new Date(); d.setHours(0,0,0,0); return d };
+const parseDt  = s  => { if (!s) return null; const d = new Date(s+'T00:00:00'); d.setHours(0,0,0,0); return d };
+const diffDays = s  => { const p = parseDt(s); if (!p) return 9999; return Math.floor((p - today()) / 86400000) };
+
+// Novo critério: Adaptado por categoria
+const statusOf = (s, cat) => {
+  const d = diffDays(s);
+  
+  if (cat === 'Petiscos') {
+    if (d <= 15) return 'critical';
+    if (d <= 30) return 'warning';
+    return 'ok';
+  }
+  
+  // Regras originais
+  if (d < 30) return 'critical';
+  if (d < 60) return 'warning';
+  return 'ok';
+};
+
+const fmtDate  = s  => { if (!s) return '—'; const [y,m,dd] = s.split('-'); return `${dd}/${m}/${y}` };
+const uid      = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const fmtMoney = v  => typeof v === 'number' ? `R$ ${v.toFixed(2).replace('.', ',')}` : 'R$ 0,00';
+
+const playSuccess = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc1 = ctx.createOscillator(); const osc2 = ctx.createOscillator(); const gain = ctx.createGain();
+    osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+    osc1.type = 'sine'; osc2.type = 'sine';
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    osc1.frequency.setValueAtTime(800, ctx.currentTime); osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.1);
+    osc2.frequency.setValueAtTime(1200, ctx.currentTime + 0.15); osc2.start(ctx.currentTime + 0.15); osc2.stop(ctx.currentTime + 0.25);
+  } catch(e) {}
+};
+
+const playError = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    osc.frequency.setValueAtTime(150, ctx.currentTime); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+};
+
+const SM = {
+  critical : { label:'Crítico',  cls:'bdg-crit' },
+  warning  : { label:'Atenção',  cls:'bdg-warn' },
+  ok       : { label:'Saudável', cls:'bdg-ok'   },
+};
+
+/* ══════════════════════════════════════════════════════
+   COMPONENTS
+══════════════════════════════════════════════════════ */
+
+/* Toast */
+function Toast({ msg, type, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3400); return () => clearTimeout(t) }, []);
+  const cls = type === 'error' ? 'terr' : type === 'warn' ? 'twarn' : 'tok';
+  const icon = type === 'error' ? '✕' : type === 'warn' ? '⚠' : '✓';
+  return <div className={`toast ${cls}`}>{icon} {msg}</div>;
+}
+
+/* Edit Modal */
+function EditModal({ item, onClose, onSave }) {
+  const [name,  setName]  = useState(item.name);
+  const [cat,   setCat]   = useState(item.category || CATS[0]);
+  const [qty,   setQty]   = useState(item.qty);
+  const [expiry,setExpiry]= useState(item.expiry);
+
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  const save = () => {
+    if (!name.trim() || !qty || !expiry) return;
+    onSave({ ...item, name, category: cat, qty: +qty, expiry, price: 0 });
+    onClose();
+  };
+
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">✏️ Editar Produto</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <div className="field"><label>Nome</label><input value={name} onChange={e => setName(e.target.value)} /></div>
+          <div className="field"><label>Categoria</label>
+            <select value={cat} onChange={e => setCat(e.target.value)}>
+              {CATS.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+        <div style={{ display:'grid', gridTemplateColumns:'80px 1fr', gap:12 }}>
+            <div className="field"><label>Qtd</label><input type="number" min="1" value={qty} onChange={e => setQty(e.target.value)} style={{ padding: '8px', fontSize: '13px', textAlign: 'center' }} /></div>
+            <div className="field"><label>Validade</label><input type="date" value={expiry} onChange={e => setExpiry(e.target.value)} style={{ padding: '6px', fontSize: '13px' }} /></div>
+          </div>
+          <div style={{ display:'flex', gap:10, marginTop:6 }}>
+            <button className="btn btn-yellow btn-full" onClick={save}>Salvar Alterações</button>
+            <button className="btn btn-ghost  btn-full" onClick={onClose}>Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Header */
+function Header({ onLogout, onShutdown, onConfig, currentUser, userKPI, gameMeta }) {
+  const fireOn = userKPI >= gameMeta;
+  return (
+    <header className="header">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '6px', flexShrink: 0 }}>
+        <path d="M11 11C11 6.02944 6.97056 2 2 2C2 6.97056 6.02944 11 11 11Z" fill="var(--accent-green)" />
+        <path d="M13 11C13 6.02944 17.0294 2 22 2C22 6.02944 17.0294 11 13 11Z" fill="var(--accent-green)" />
+        <path d="M11 13C11 17.9706 6.97056 22 2 22C2 17.9706 6.02944 13 11 13Z" fill="var(--accent-green)" />
+        <path d="M13 13C13 17.9706 17.0294 22 22 22C22 17.9706 17.0294 13 13 13Z" fill="var(--accent-green)" />
+      </svg>
+      <div className="header-brand" style={{ marginLeft: '4px' }}>
+        <div className="header-title"><span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>Agro Mané</span></div>
+        <div className="header-sub">GESTÃO INTELIGENTE DE VALIDADES</div>
+      </div>
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+        {currentUser && (
+          <div style={{ background: fireOn ? 'rgba(255,87,34,0.1)' : 'var(--bg-elevated)', border: fireOn ? '1px solid #FF5722' : '1px solid var(--border)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, color: fireOn ? '#FF5722' : 'var(--text2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            {currentUser.nome} <span style={{ opacity: fireOn ? 1 : 0.3 }}>🔥</span> ({userKPI}/{gameMeta})
+          </div>
+        )}
+        <button onClick={onConfig} className="btn btn-config" title="Ajustes">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+        <button onClick={onLogout} className="btn btn-config" title="Trocar Usuário (Sair)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </button>
+        <button onClick={onShutdown} className="btn btn-power" title="Desligar Servidor">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+/* KPI Bar */
+function KpiBar({ stock, onFilterClick }) {
+  const total = stock.length;
+  const crit  = stock.filter(i => statusOf(i.expiry, i.category) === 'critical').length;
+  const warn  = stock.filter(i => statusOf(i.expiry, i.category) === 'warning').length;
+  const ok    = stock.filter(i => statusOf(i.expiry, i.category) === 'ok').length;
+  return (
+    <div className="kpi-bar">
+      <div className="kpi yel" style={{cursor:'pointer'}} onClick={() => onFilterClick('all')}><span className="kpi-icon">🏪</span><div><div className="kpi-num">{total}</div><div className="kpi-lbl">Produtos</div></div></div>
+      <div className="kpi crit" style={{cursor:'pointer'}} onClick={() => onFilterClick('critical')}><span className="kpi-icon">🚨</span><div><div className="kpi-num">{crit}</div><div className="kpi-lbl">Crítico</div></div></div>
+      <div className="kpi warn" style={{cursor:'pointer'}} onClick={() => onFilterClick('warning')}><span className="kpi-icon">⚠️</span><div><div className="kpi-num">{warn}</div><div className="kpi-lbl">Atenção</div></div></div>
+      <div className="kpi ok" style={{cursor:'pointer'}} onClick={() => onFilterClick('ok')}><span className="kpi-icon">✅</span><div><div className="kpi-num" style={{color:'#86efac'}}>{ok}</div><div className="kpi-lbl">Saudável</div></div></div>
+    </div>
+  );
+}
+
+/* Tabs */
+function Tabs({ active, onChange }) {
+  return (
+    <div className="tabs">
+      {[
+        { id:'capture', l:'📡 Captura' },
+        { id:'receive', l:'📦 Recebimento' },
+        { id:'stock',   l:'📦 Estoque' },
+        { id:'inventory',l:'🧹 Inventário Rápido' },
+        { id:'dash',    l:'📊 Dashboard' },
+        { id:'equipe',  l:'👥 Equipe' },
+      ].map(t => (
+        <button key={t.id} className={`tab${active === t.id ? ' active' : ''}`} onClick={() => onChange(t.id)}>{t.l}</button>
+      ))}
+    </div>
+  );
+}
+
+/* ── CAPTURE TAB ── */
+function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, config, setConfig }) {
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [ean,  setEan]  = useState('');
+  const [name, setName] = useState('');
+  const [cat,  setCat]  = useState(() => localStorage.getItem('agromane_last_cat') || CATS[0]);
+  const [qty,  setQty]  = useState('');
+  const [exp,  setExp]  = useState('');
+  const [hint, setHint] = useState(null);
+  const [loading, setLoad] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  const myScans = useMemo(() => {
+    return stock
+      .filter(i => i.ultimo_vendedor === currentUser.nome)
+      .sort((a, b) => new Date(b.atualizado_em) - new Date(a.atualizado_em))
+      .slice(0, 7);
+  }, [stock, currentUser]);
+
+  const [cameraError, setCameraError] = useState('');
+
+  useEffect(() => {
+    let html5QrCode;
+    if (scannerOpen && window.Html5Qrcode) {
+      setCameraError('Iniciando câmera...');
+      window.Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length > 0) {
+          let cameraId = devices[0].id;
+          const backCam = devices.find(d => 
+            d.label.toLowerCase().includes('back') || 
+            d.label.toLowerCase().includes('traseira') || 
+            d.label.toLowerCase().includes('ambiente') || 
+            d.label.toLowerCase().includes('rear')
+          );
+          if (backCam) {
+            cameraId = backCam.id;
+          }
+
+          html5QrCode = new window.Html5Qrcode("qr-reader");
+          html5QrCode.start(
+            cameraId,
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+              setEan(decodedText);
+              html5QrCode.stop().then(() => {
+                setScannerOpen(false);
+                lookup(decodedText);
+              }).catch(e => console.error(e));
+            },
+            () => {}
+          ).then(() => {
+            setCameraError('');
+          }).catch(err => {
+            setCameraError(`Erro ao abrir fluxo de vídeo: ${err.message || err}`);
+          });
+        } else {
+          setCameraError('Nenhuma câmera detectada pelo navegador.');
+        }
+      }).catch(err => {
+        setCameraError(`Erro ao acessar hardware de câmera: ${err.message || err}. Certifique-se de usar HTTPS ou habilitar a flag no Chrome.`);
+      });
+
+      return () => {
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().catch(e => console.error(e));
+        }
+      };
+    }
+  }, [scannerOpen]);
+
+  const eanRef  = useRef(); const nameRef = useRef();
+  const catRef  = useRef(); const qtyRef  = useRef(); const expRef = useRef();
+
+  useEffect(() => { setTimeout(() => eanRef.current?.focus(), 120) }, []);
+
+  const lookup = useCallback(async (code) => {
+    if (!code.trim()) return;
+    setLoad(true);
+    setHint({ type:'info', msg:'🔍 Consultando 4 bases de dados em paralelo...' });
+
+    const dict = await db.loadDict();
+    if (dict[code]) {
+      setName(dict[code]);
+      setHint({ type:'ok', msg:'✅ Encontrado na memória local (instantâneo!)' });
+      setLoad(false);
+      setTimeout(() => catRef.current?.focus(), 180);
+      return;
+    }
+
+    const resultName = await db.lookupEan(code);
+    setLoad(false);
+    if (resultName) {
+      setName(resultName);
+      setHint({ type:'ok', msg:'✅ Produto encontrado! Edite o nome se necessário.' });
+      setTimeout(() => catRef.current?.focus(), 180);
+    } else {
+      setName('');
+      setHint({ type:'warn', msg:'⚠ Não encontrado nas bases — digite o nome manualmente.' });
+        playError();
+      setTimeout(() => nameRef.current?.focus(), 150);
+    }
+  }, []);
+
+  const handleEanKey  = e => { if (e.key === 'Enter' && ean.trim()) lookup(ean.trim()) };
+  const handleNameKey = e => { if (e.key === 'Enter' && name.trim()) catRef.current?.focus() };
+  const handleCatKey  = e => { if (e.key === 'Enter') qtyRef.current?.focus() };
+  const handleQtyKey  = e => { if (e.key === 'Enter' && qty) expRef.current?.focus() };
+
+  const reset = () => {
+    setEan(''); setName(''); setQty(''); setExp(''); setHint(null);
+    setTimeout(() => eanRef.current?.focus(), 80);
+  };
+
+  const handleExpChange = (e) => {
+    let v = e.target.value.replace(/\D/g, '');
+    if (v.length > 8) v = v.slice(0,8);
+    if (v.length > 4) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
+    else if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+    setExp(v);
+  };
+
+  const handleSave = async () => {
+    let finalEan = ean.trim();
+    if (!finalEan) {
+      finalEan = 'INT-' + Math.floor(10000 + Math.random() * 90000);
+    }
+
+    if (!name.trim())      { playError(); toast('Informe o nome do produto.','error'); return }
+    if (!qty || +qty <= 0) { playError(); toast('Quantidade inválida.','error'); return }
+    if (!exp)              { playError(); toast('Informe a data de validade.','error'); return }
+
+    let finalExp = exp;
+    if (exp.includes('/')) {
+      const parts = exp.split('/');
+      if (parts.length === 3 && parts[2].length === 4) {
+        finalExp = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      } else {
+        playError(); toast('Data inválida. Use DD/MM/AAAA','error'); return;
+      }
+    }
+
+    const item = { id:uid(), ean:finalEan, name:name.trim(), category:cat, qty:+qty, expiry:finalExp, price: 0, ultimo_vendedor: currentUser.nome, atualizado_em: new Date().toISOString() };
+    await db.addItem(item);
+    
+    if (!finalEan.startsWith('INT-')) { 
+      await db.addDict(finalEan, name.trim()); 
+    }
+    
+    localStorage.setItem('agromane_last_cat', cat);
+
+    // KPI verification for gamification popup
+    const hojeStr = new Date().toISOString().split('T')[0];
+    const kpiKey = `bipe_${hojeStr}_${currentUser.nome}`;
+    
+    let prevScansConfig = parseInt(config[kpiKey] || '0', 10);
+    let prevScansStock = stock.filter(i => i.ultimo_vendedor === currentUser.nome && i.atualizado_em && i.atualizado_em.startsWith(hojeStr)).length;
+    let prevScans = Math.max(prevScansConfig, prevScansStock);
+    
+    const newScore = prevScans + 1;
+    
+    // Save new score to permanent config to avoid losing points on 'baixa'
+    await db.saveConfig(kpiKey, newScore.toString());
+    setConfig(prev => ({ ...prev, [kpiKey]: newScore.toString() }));
+    
+    if (newScore === Math.floor(gameMeta * 0.7) && gameMeta > 0) {
+      toast('🚀 Bora lá, você está quase!');
+    } else if (newScore === gameMeta && gameMeta > 0) {
+      setShowCelebration(true);
+    }
+
+    playSuccess();
+    toast(`"${name.length > 38 ? name.slice(0,38)+'…' : name}" salvo!`);
+    reset(); onSave();
+  };
+
+  return (
+    <>
+      {showCelebration && (
+        <div className="modal-bg no-print" style={{ zIndex: 99999 }} onClick={() => setShowCelebration(false)}>
+          <div className="modal" style={{ textAlign: 'center', width: '90%', maxWidth: '350px', background: 'var(--bg-primary)', animation: 'tin 0.4s ease' }}>
+            <div style={{ fontSize: '60px' }}>🎉</div>
+            <h2 style={{ fontSize: 24, fontWeight: 900, color: 'var(--accent-green)', margin: '15px 0' }}>Bateu a meta, {currentUser.nome}!</h2>
+            <p style={{ fontSize: 15, color: 'var(--text-primary)', marginBottom: 25 }}>{gameMsg}</p>
+            <button className="btn btn-yellow btn-full" style={{ padding: 14, fontSize: 16 }} onClick={() => setShowCelebration(false)}>Continuar Vencendo 🚀</button>
+          </div>
+        </div>
+      )}
+      {scannerOpen && (
+        <div className="modal-bg no-print" style={{ zIndex: 9999 }}>
+          <div className="modal" style={{ width: '90%', maxWidth: '400px', padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>📷 Leitura por Câmera</h3>
+              <button onClick={() => setScannerOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>×</button>
+            </div>
+            <div id="qr-reader" style={{ width: '100%', borderRadius: '8px', overflow: 'hidden' }}></div>
+            {cameraError && (
+              <p style={{ fontSize: '0.8rem', color: '#E53935', textAlign: 'center', marginTop: '10px', background: 'rgba(229,57,53,0.1)', padding: '8px', borderRadius: '4px' }}>
+                ⚠️ {cameraError}
+              </p>
+            )}
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '12px' }}>
+              Aponte a câmera para o código de barras do produto.
+            </p>
+          </div>
+        </div>
+      )}
+      <div className="panel" style={{ display: 'grid', gridTemplateColumns: '55fr 45fr', gap: '16px', height: 'calc(100vh - 203px)', overflow: 'hidden', alignItems: 'stretch' }}>
+      <div className="card scr" style={{ overflowY: 'auto', gap: '12px', padding: '16px' }}>
+        <div className="card-title" style={{ marginBottom: '0' }}>📡 Captura Inteligente</div>
+
+        <div className="field">
+          <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Código EAN / Barras</label>
+          <div style={{ display:'flex', gap: '8px' }}>
+            <input ref={eanRef} value={ean} onChange={e => setEan(e.target.value)} onKeyDown={handleEanKey}
+              placeholder="Bipe ou digite o EAN + Enter" style={{ flex: 1, padding: '0 10px', height: '38px', fontSize: '0.95rem' }} />
+            {isMobile && (
+              <button className="btn" style={{ height: '38px', minWidth: '42px', padding: 0, flexShrink:0, borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+                onClick={() => setScannerOpen(true)} title="Ler com Câmera">
+                📷
+              </button>
+            )}
+            <button className="btn btn-yellow" style={{ height: '38px', minWidth: '42px', padding: 0, flexShrink:0, borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => lookup(ean.trim())} disabled={loading}>
+              {loading ? <span className="spin"/> : '🔍'}
+            </button>
+          </div>
+        </div>
+
+        {hint && <div className={`hint ${hint.type}`} style={{ margin: 0, padding: '4px 8px', fontSize: '11px' }}>{hint.msg}</div>}
+
+        <div className="field">
+          <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Nome do Produto</label>
+          <input ref={nameRef} value={name} onChange={e => setName(e.target.value)} onKeyDown={handleNameKey}
+            placeholder="Preenchido automaticamente ou digite manualmente" style={{ width: '100%', height: '38px', padding: '0 10px', fontSize: '0.9rem' }} />
+        </div>
+
+        <div className="field">
+          <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Categoria</label>
+          <select ref={catRef} value={cat} onChange={e => { setCat(e.target.value); qtyRef.current?.focus(); }} onKeyDown={handleCatKey} style={{ width: '100%', height: '38px', padding: '0 10px', fontSize: '0.9rem' }}>
+            {CATS.map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'80px 1fr', gap: '10px' }}>
+          <div className="field">
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Qtd</label>
+            <input ref={qtyRef} type="number" min="1" value={qty}
+              onChange={e => setQty(e.target.value)} onKeyDown={handleQtyKey} placeholder="0" style={{ height: '38px', padding: '0 10px', fontSize: '0.9rem', textAlign: 'center' }} />
+          </div>
+          <div className="field">
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Validade</label>
+            <input ref={expRef} type="tel" value={exp} placeholder="DD/MM/AAAA"
+              onChange={handleExpChange} onKeyDown={e => e.key === 'Enter' && handleSave()} style={{ height: '38px', padding: '0 8px', fontSize: '0.9rem', textAlign: 'center' }} />
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap: '8px', marginTop: '4px' }}>
+          <button className="btn btn-yellow btn-full" style={{ width: '100%', height: '40px', fontSize: '1rem', fontWeight: 700 }} onClick={handleSave}>✓ Salvar Produto</button>
+          <button style={{ height: '40px', minWidth: '40px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }} onClick={reset} title="Limpar">✕</button>
+        </div>
+      </div>
+
+      <div className="card scr" style={{ overflowY: 'auto', padding: 0 }}>
+        <div className="card-title" style={{ padding: '24px 24px 0 24px', marginBottom: '8px' }}>⏱️ Meus Últimos Bipes</div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          {myScans.length === 0 ? (
+            <div className="empty" style={{ flex: 1, border: 'none', background: 'transparent', justifyContent: 'center', margin: 0, padding: 0 }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--border)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '8px' }}>
+                <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M8 12h8M8 8h8M8 16h8"/>
+              </svg>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Aguardando leitura</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Bipe ou digite um código EAN para começar</div>
+            </div>
+          ) : (
+            <div className="scr" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              {myScans.map((item, idx) => {
+                const st = item.expiry ? statusOf(item.expiry, item.category) : 'ok';
+                return (
+                  <div key={idx} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 24px',
+                    borderBottom: '1px solid var(--border)',
+                    transition: 'all 0.2s',
+                  }} onMouseOver={e=>e.currentTarget.style.background='var(--bg-elevated)'} onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }} title={item.name}>
+                      {item.name}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
+                      {item.category}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', minWidth: '36px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                      {item.qty} un
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', minWidth: '90px', textAlign: 'right' }}>
+                      {item.expiry ? item.expiry.split('-').reverse().join('/') : '-'}
+                    </div>
+                    <div className={`badge ${SM[st].cls}`} style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: '4px', textAlign: 'center', minWidth: '70px' }}>
+                      {SM[st].label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+    </div>
+    </div>
+    </>
+  );
+}
+
+/* ── RECEBIMENTO TAB (DANFE) ── */
+function RecebimentoTab({ onSave, toast }) {
+  const [chave, setChave] = useState('');
+  const [pendingItems, setPendingItems] = useState([]);
+  const [loading, setLoad] = useState(false);
+
+  const handleXmlUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setLoad(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const xml = ev.target.result;
+      try {
+        const res = await fetch(`${API_URL}/estoque/importar-xml`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ xml })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        
+        if (data.length === 0) {
+            toast('Nenhum produto encontrado neste XML.', 'warn');
+            return;
+        }
+
+        const items = data.map(item => ({
+          ...item,
+          id: uid(),
+          expiry: '',
+          category: CATS[0]
+        }));
+        setPendingItems(items);
+        toast(`${items.length} produtos carregados do XML!`);
+      } catch (err) {
+        toast('Erro: ' + err.message, 'error');
+      } finally {
+        setLoad(false);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const confirmImport = async () => {
+    const missing = pendingItems.filter(i => !i.expiry);
+    if (missing.length > 0) {
+      toast('Preencha a data de validade de todos os itens em amarelo!', 'error');
+      return;
+    }
+
+    setLoad(true);
+    for (const item of pendingItems) {
+      let finalEan = item.ean || ('INT-' + Math.floor(10000 + Math.random() * 90000));
+      await db.addItem({ id: uid(), ean: finalEan, name: item.name, category: item.category, qty: Number(item.qty), expiry: item.expiry, price: 0 });
+      if (!finalEan.startsWith('INT-')) await db.addDict(finalEan, item.name);
+    }
+    toast(`${pendingItems.length} produtos adicionados ao estoque com sucesso!`);
+    setPendingItems([]);
+    setLoad(false);
+    onSave();
+  };
+
+  return (
+    <div className="panel p1rows">
+      {pendingItems.length === 0 ? (
+        <div className="card" style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, borderStyle:'dashed', borderWidth: 2, borderColor:'var(--border2)' }}>
+          <div style={{ fontSize:40, marginBottom:10 }}>🧾</div>
+          <h2 style={{ fontSize:18, fontWeight:900, color:'var(--text)', marginBottom:5 }}>Entrada de Nota Fiscal</h2>
+          <p style={{ fontSize:13, color:'var(--text3)', marginBottom:20, textAlign:'center' }}>Faça o upload do arquivo XML da Nota Fiscal para importar os produtos.</p>
+          
+          <label style={{ cursor: 'pointer', background: 'var(--yellow)', padding: '12px 24px', borderRadius: '10px', fontWeight: 800, color: '#111', transition: '.2s' }}>
+             📁 Importar Arquivo XML
+             <input type="file" accept=".xml" style={{ display: 'none' }} onChange={handleXmlUpload} disabled={loading} />
+          </label>
+          
+          <div style={{ marginTop: 20, fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
+            (A leitura automática via Chave DANFE exige Certificado Digital A1/A3)
+          </div>
+          {loading && <div style={{ marginTop: 15 }}><span className="spin"/></div>}
+        </div>
+      ) : (
+        <>
+          <div className="card" style={{ padding:'12px 16px', flexDirection:'row', justifyContent:'space-between', alignItems:'center', flex:'0 0 auto' }}>
+            <div>
+              <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Conferência de Recebimento</div>
+              <div style={{ fontSize:12, color:'var(--text3)' }}>Preencha as validades para dar entrada no estoque.</div>
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <button className="btn btn-ghost" onClick={() => setPendingItems([])}>Cancelar</button>
+              <button className="btn btn-yellow" onClick={confirmImport} disabled={loading}>{loading ? <span className="spin"/> : '✓ Confirmar Entrada no Estoque'}</button>
+            </div>
+          </div>
+          <div className="card scr" style={{ padding:0 }}>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead style={{ position:'sticky', top:0, background:'var(--surface2)', zIndex:1 }}>
+                <tr>
+                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Produto (Nota)</th>
+                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>EAN (Nota)</th>
+                  <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Qtd (Nota)</th>
+                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Produto (Cadastro)</th>
+                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>EAN (Cadastro)</th>
+                  <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Qtd</th>
+                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Categoria</th>
+                  <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Validade (Obrigatório)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingItems.map((item, idx) => (
+                  <tr key={item.id} style={{ borderBottom:'1px solid var(--border)' }}>
+                    <td style={{ padding:'10px 12px', fontSize:13, fontWeight:700, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={item.name}>{item.name}</td>
+                    <td style={{ padding:'10px 12px', fontSize:11, fontFamily:'monospace', color:'var(--muted)' }}>{item.ean || 'SEM EAN'}</td>
+                    <td style={{ padding:'10px 12px', fontSize:14, fontWeight:800, textAlign:'center' }}>{item.qty}</td>
+                    <td style={{ padding:'10px 12px' }}>
+                      <input type="text" value={item.name} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, name: e.target.value } : i))} style={{ padding:'6px 8px', borderRadius:6, border:'1px solid var(--border2)', fontSize:12, width:'100%', minWidth:'180px', outline:'none', fontWeight:700, color:'var(--text-primary)', background:'var(--bg-elevated)' }} />
+                    </td>
+                    <td style={{ padding:'10px 12px' }}>
+                      <input type="text" value={item.ean} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, ean: e.target.value.replace(/\D/g, '') } : i))} style={{ padding:'6px 8px', borderRadius:6, border:'1px solid var(--border2)', fontSize:11, fontFamily:'monospace', width:'110px', outline:'none', color:'var(--text-primary)', background:'var(--bg-elevated)' }} placeholder="SEM EAN" />
+                    </td>
+                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
+                      <input type="number" min="1" value={item.qty} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, qty: e.target.value } : i))} style={{ padding:'6px', borderRadius:6, border:'1px solid var(--border2)', fontSize:13, width:'60px', textAlign:'center', outline:'none', fontWeight:800, color:'var(--text-primary)', background:'var(--bg-elevated)' }} />
+                    </td>
+                    <td style={{ padding:'10px 12px' }}>
+                      <select value={item.category} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, category: e.target.value } : i))} style={{ padding:'6px', borderRadius:6, border:'1px solid var(--border2)', fontSize:12, width:'100%', outline:'none', color:'var(--text-primary)', background:'var(--bg-elevated)' }}>
+                        {CATS.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
+                      <input id={`exp-${idx}`} type="date" value={item.expiry} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, expiry: e.target.value } : i))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const n = document.getElementById(`exp-${idx + 1}`); if (n) n.focus(); else confirmImport(); } }} style={{ padding:'8px 10px', borderRadius:8, border: item.expiry ? '1.5px solid var(--border2)' : '2px solid var(--yellow)', background: item.expiry ? 'var(--surface)' : 'var(--yellow-lt)', outline:'none', fontSize:13, width:140 }} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ── STOCK TAB ── */
+function StockTab({ stock, setStock, toast, config, fSt, setFSt, currentUser }) {
+  const [editing, setEditing] = useState(null);
+  const [baixaItem, setBaixaItem] = useState(null);
+  const [baixaQtd, setBaixaQtd] = useState('');
+  const [search,  setSearch]  = useState('');
+  const [fCat,    setFCat]    = useState('all');
+
+  const filtered = useMemo(() => {
+    return stock
+      .filter(i => fCat === 'all' || (i.category || CATS[0]) === fCat)
+      .filter(i => fSt  === 'all' || statusOf(i.expiry, i.category) === fSt)
+      .filter(i => !search || i.name.toLowerCase().includes(search.toLowerCase()) || i.ean.includes(search))
+      .sort((a, b) => diffDays(a.expiry) - diffDays(b.expiry));
+  }, [stock, fCat, fSt, search]);
+
+  const handleBaixa = async (id, tipo) => {
+    const qtyToDrop = parseInt(baixaQtd);
+    if (isNaN(qtyToDrop) || qtyToDrop <= 0 || qtyToDrop > baixaItem.qty) {
+      toast('Quantidade inválida para baixa.', 'error');
+      return;
+    }
+    await db.baixarItem(id, tipo, qtyToDrop, currentUser?.nome);
+    if (qtyToDrop === baixaItem.qty) {
+      const u = stock.filter(i => i.id !== id);
+      setStock(u);
+    } else {
+      const u = stock.map(i => i.id === id ? { ...i, qty: i.qty - qtyToDrop } : i);
+      setStock(u);
+    }
+    toast('Baixa registrada com sucesso!');
+    setBaixaItem(null);
+  };
+
+  const edit = async updated => {
+    await db.updateItem(updated);
+    const u = stock.map(i => i.id === updated.id ? updated : i);
+    setStock(u);
+    if (!updated.ean.startsWith('INT-')) await db.addDict(updated.ean, updated.name);
+    toast('Produto atualizado!');
+  };
+
+  const sendProductionAlert = () => {
+    if (!config || !config.telegram_token) { toast('Configure o Telegram nos Ajustes!', 'error'); return; }
+    const mp = stock.filter(i => statusOf(i.expiry, i.category) === 'critical' || statusOf(i.expiry, i.category) === 'warning');
+    if (mp.length === 0) { toast('Nenhum item em risco!', 'ok'); return; }
+    
+    let msg = `*ALERTA DE ESTOQUE AGRO MANÉ* 🚨\n\nPriorize a venda dos seguintes itens para evitar perdas:\n\n`;
+    mp.forEach(i => {
+      const st = statusOf(i.expiry, i.category) === 'critical' ? '🚨' : '⚠️';
+      msg += `${st} *${i.name}* - Vence em ${diffDays(i.expiry)} dias (${i.qty} un)\n`;
+    });
+    msg += `\n_Gerado automaticamente pelo Sistema Agro Mané_`;
+    db.sendMessage(msg);
+    toast('Alerta enviado via Telegram!');
+  };
+
+  return (
+    <div className="panel p1rows">
+      <div className="card" style={{ padding:'11px 14px', flex:'0 0 auto', borderRadius: '10px' }}>
+        <div className="filter-bar" onWheel={e => { if (e.deltaY !== 0) { e.currentTarget.scrollLeft += e.deltaY; } }}>
+          <input className="srch" placeholder="🔍 Buscar nome ou código EAN..." value={search} onChange={e => setSearch(e.target.value)} />
+          {['all', ...CATS].map(c => (
+            <button key={c} className={`fbtn${fCat === c ? ' active' : ''}`} onClick={() => setFCat(c)}>
+              {c === 'all' ? 'Todas Categorias' : c}
+            </button>
+          ))}
+          <div style={{ borderLeft: '1px solid var(--border)', height: '20px', margin: '0 8px' }}></div>
+          {[{id:'all',l:'Todos'},{id:'critical',l:'Crítico'},{id:'warning',l:'Atenção'},{id:'ok',l:'Saudável'}].map(f => {
+            const cls = fSt === f.id ? (f.id === 'critical' ? ' active-critical' : f.id === 'warning' ? ' active-warning' : ' active') : '';
+            return <button key={f.id} className={`fbtn${cls}`} onClick={() => setFSt(f.id)}>{f.l}</button>;
+          })}
+          <button className="btn btn-yellow" style={{ padding:'5px 12px', fontSize:12, borderRadius:20, marginLeft:'auto', flexShrink:0, whiteSpace:'nowrap' }} onClick={sendProductionAlert}>📲 Alerta Vencimentos 🚨</button>
+        </div>
+      </div>
+
+      <div className="card" style={{ padding:0, overflow:'hidden' }}>
+        {filtered.length === 0 ? (
+          <div className="empty"><div className="empty-icon">🗃️</div><p>Nenhum produto encontrado.</p></div>
+        ) : (
+          <>
+            <div className="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                <th>Produto</th><th>Categoria</th><th>EAN</th><th>Qtd</th><th>Validade</th><th>Dias</th><th>Status</th><th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(item => {
+                    const d  = diffDays(item.expiry);
+                    const st = statusOf(item.expiry, item.category);
+                    const col= d < 0 ? 'var(--red)' : st === 'critical' ? 'var(--red)' : st === 'warning' ? 'var(--orange)' : 'var(--green)';
+                    const dl = d < 0 ? `-${Math.abs(d)}d` : d === 0 ? 'HOJE!' : d === 1 ? 'AMANHÃ' : `${d}d`;
+                    return (
+                      <tr key={item.id}>
+                        <td className="td-name">{item.name}</td>
+                        <td><span className="cat-tag">{item.category||CATS[0]}</span></td>
+                        <td className="td-ean">{item.ean}</td>
+                        <td style={{ fontWeight:700 }}>{item.qty}</td>
+                        <td style={{ fontSize:13, fontWeight:600 }}>{fmtDate(item.expiry)}</td>
+                        <td style={{ fontFamily:'JetBrains Mono', fontSize:13, color:col, fontWeight:700 }}>{dl}</td>
+                        <td><span className={`badge ${SM[st].cls}`}>{SM[st].label}</span></td>
+                        <td>
+                          <div style={{ display:'flex', gap:6 }}>
+                            <button className="btn btn-edit"   onClick={() => setEditing(item)}>✏ Editar</button>
+                            <button className="btn btn-danger" style={{ padding: '5px 10px' }} onClick={() => { setBaixaItem(item); setBaixaQtd(item.qty); }}>👇 Dar Baixa</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="tbl-foot">{filtered.length} de {stock.length} itens exibidos</div>
+          </>
+        )}
+      </div>
+      {editing && <EditModal item={editing} onClose={() => setEditing(null)} onSave={edit} />}
+      
+      {baixaItem && (
+        <div className="modal-bg no-print" onClick={() => setBaixaItem(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign:'center' }}>
+            <h2 style={{ fontSize:18, fontWeight:900, marginBottom:10 }}>👇 Dar Baixa no Estoque</h2>
+            <p style={{ fontSize:14, color:'var(--text2)', marginBottom:10 }}>Quantos itens de <strong>{baixaItem.name}</strong> você quer baixar?</p>
+            <div className="field" style={{ marginBottom: 20, alignItems: 'center' }}>
+              <input type="number" min="1" max={baixaItem.qty} value={baixaQtd} onChange={e => setBaixaQtd(e.target.value)} style={{ textAlign: 'center', fontSize: 20, width: '120px' }} autoFocus />
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 5 }}>Em estoque: {baixaItem.qty} un</div>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              <button className="btn btn-full" onClick={() => handleBaixa(baixaItem.id, 'venda')} style={{ background:'var(--green)', color:'#fff', padding:'14px', fontSize:15 }}>✅ Baixar por Venda (Evitou Perda)</button>
+              <button className="btn btn-danger btn-full" onClick={() => handleBaixa(baixaItem.id, 'perda')} style={{ padding:'14px', fontSize:15 }}>🗑️ Baixar por Perda/Descarte</button>
+              <button className="btn btn-ghost btn-full" onClick={() => setBaixaItem(null)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── INVENTORY TAB (AJUSTE RÁPIDO) ── */
+function InventoryTab({ stock, setStock, toast }) {
+  const [counts, setCounts] = useState({});
+
+  const healthyItems = useMemo(() => {
+    return stock
+      .filter(i => statusOf(i.expiry, i.category) === 'ok')
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [stock]);
+
+  const handleAjuste = async (item) => {
+    const physicalQty = counts[item.id] !== undefined ? parseInt(counts[item.id]) : item.qty;
+    
+    if (isNaN(physicalQty) || physicalQty < 0) { toast('Quantidade inválida.', 'error'); return; }
+    
+    const soldQty = item.qty - physicalQty;
+    
+    if (soldQty < 0) { toast('Para aumentar o estoque, use a aba Captura/Recebimento.', 'error'); return; }
+    if (soldQty === 0) { toast('A quantidade informada é igual à do sistema.', 'warn'); return; }
+
+    await db.ajusteSaudavel(item.id, physicalQty, soldQty, currentUser?.nome);
+    const u = stock.map(i => i.id === item.id ? { ...i, qty: physicalQty } : i).filter(i => i.qty > 0);
+    setStock(u);
+    
+    const nCounts = { ...counts }; delete nCounts[item.id]; setCounts(nCounts);
+    
+    toast(`Ajuste de -${soldQty} un. registrado como venda normal!`);
+  };
+
+  return (
+    <div className="panel p1rows">
+      <div className="card" style={{ padding:'12px 16px', flexDirection:'row', justifyContent:'space-between', alignItems:'center', flex:'0 0 auto' }}>
+        <div>
+          <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Inventário de Limpeza Rápida</div>
+          <div style={{ fontSize:12, color:'var(--text3)' }}>Apenas produtos saudáveis que possivelmente já foram vendidos no fluxo normal a preço cheio.</div>
+        </div>
+        <div style={{ fontSize:13, fontWeight:800, color:'var(--green)' }}>{healthyItems.length} Itens Saudáveis Acumulados</div>
+      </div>
+      
+      <div className="card" style={{ padding:0, overflow:'hidden' }}>
+        {healthyItems.length === 0 ? (
+          <div className="empty"><div className="empty-icon">🧹</div><p>Nenhum estoque fantasma acumulado.</p></div>
+        ) : (
+          <div className="tbl-wrap">
+          <table style={{ width:'100%', borderCollapse:'collapse' }}>
+            <thead style={{ position:'sticky', top:0, background:'var(--surface2)', zIndex:1 }}>
+              <tr>
+                <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Produto</th>
+                <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Categoria</th>
+                <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Validade</th>
+                <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Qtd Sistema</th>
+                <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Qtd Real (Prateleira)</th>
+                <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Ação Rápida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {healthyItems.map((item) => (
+                <tr key={item.id} style={{ borderBottom:'1px solid var(--border)' }}>
+                  <td style={{ padding:'10px 12px', fontSize:13, fontWeight:700, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>{item.name}</td>
+                  <td style={{ padding:'10px 12px' }}><span className="cat-tag">{item.category||CATS[0]}</span></td>
+                  <td style={{ padding:'10px 12px', fontSize:13, fontWeight:600, textAlign:'center', color: 'var(--green)' }}>{fmtDate(item.expiry)}</td>
+                  <td style={{ padding:'10px 12px', fontSize:14, fontWeight:800, textAlign:'center' }}>{item.qty}</td>
+                  <td style={{ padding:'10px 12px', textAlign:'center' }}>
+                    <input type="number" min="0" max={item.qty} 
+                      value={counts[item.id] !== undefined ? counts[item.id] : item.qty} 
+                      onChange={e => setCounts({...counts, [item.id]: e.target.value})} 
+                      style={{ width: '60px', padding: '6px', textAlign: 'center', borderRadius: '6px', border: '1px solid var(--border2)', fontFamily: 'Inter', fontSize: 14, outline: 'none', background: 'var(--bg-elevated)', color: 'var(--text-primary)' }} />
+                  </td>
+                  <td style={{ padding:'10px 12px', textAlign:'center' }}>
+                    <button className="btn btn-outline" style={{ padding:'6px 12px', fontSize:12, borderColor:'var(--border2)', color:'var(--text2)' }} onClick={() => handleAjuste(item)}>✓ Ajustar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── DASH TAB ── */
+function DashTab({ stock, config, toast, setStock, currentUser }) {
+  const [hojeSalvos, setHojeSalvos] = useState([]);
+  const [hojePerdidos, setHojePerdidos] = useState([]);
+  const [historicoModal, setHistoricoModal] = useState(null);
+  const [acaoPendente, setAcaoPendente] = useState(null);
+  const [acaoQtdDigitada, setAcaoQtdDigitada] = useState(1);
+
+  useEffect(() => {
+    const fetchMes = async () => {
+      const p = await db.loadPerdas();
+      const g = await db.loadGanhos();
+      setHojePerdidos(p);
+      setHojeSalvos(g);
+    };
+    fetchMes();
+  }, [stock]);
+
+  const iniciarAcaoOportunidade = (item, tipo) => {
+    setAcaoQtdDigitada(1);
+    setAcaoPendente({ item, tipo, max: item.qty });
+  };
+
+  const confirmarAcaoOportunidade = async () => {
+    if (!acaoPendente) return;
+    const { item, tipo, max } = acaoPendente;
+    let qtd = Number(acaoQtdDigitada);
+    if (qtd < 1) qtd = 1;
+    if (qtd > max) qtd = max;
+
+    await db.baixarItem(item.id, tipo === 'perda' ? 'perda' : 'venda', qtd, currentUser?.nome);
+    toast(tipo === 'perda' ? 'Registrado como perda!' : 'Venda promocional registrada!');
+    db.loadStock().then(setStock);
+    setAcaoPendente(null);
+  };
+
+  const elegiveis = useMemo(() => {
+    return stock.filter(i => {
+      const d = diffDays(i.expiry);
+      return d > 0 && d <= 60;
+    }).sort((a, b) => diffDays(a.expiry) - diffDays(b.expiry));
+  }, [stock]);
+
+  const crit = stock.filter(i => statusOf(i.expiry, i.category) === 'critical');
+  const warn = stock.filter(i => statusOf(i.expiry, i.category) === 'warning');
+  const ok   = stock.filter(i => statusOf(i.expiry, i.category) === 'ok');
+
+  const top10 = [...stock]
+    .filter(i => diffDays(i.expiry) < 9999)
+    .sort((a, b) => diffDays(a.expiry) - diffDays(b.expiry))
+    .slice(0, 10);
+
+  const byCat = useMemo(() => {
+    const map = {};
+    CATS.forEach(c => { map[c] = { total:0, critical:0, warning:0, ok:0 } });
+    stock.forEach(i => {
+      const c = i.category || CATS[0];
+      if (!map[c]) map[c] = { total:0, critical:0, warning:0, ok:0 };
+      map[c].total++; map[c][statusOf(i.expiry, i.category)]++;
+    });
+    return Object.entries(map)
+      .filter(([, v]) => v.total > 0)
+      .sort((a, b) => {
+        if (b[1].critical !== a[1].critical) return b[1].critical - a[1].critical;
+        if (b[1].warning !== a[1].warning) return b[1].warning - a[1].warning;
+        return b[1].ok - a[1].ok;
+      });
+  }, [stock]);
+  const maxCat = Math.max(1, ...byCat.map(([, v]) => v.total));
+
+  const [actionItem, setActionItem] = useState(null);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setAcaoPendente(null);
+        setHistoricoModal(null);
+        setActionItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
+  const exportarOportunidadesCSV = () => {
+    if (elegiveis.length === 0) {
+      toast("Nenhum produto na oportunidade para exportar.");
+      return;
+    }
+    // Adiciona o BOM (\ufeff) para o Excel reconhecer os acentos do Brasil corretamente
+    let csv = "\ufeffProduto;Quantidade;Validade;Desconto Recomendado\n";
+    elegiveis.forEach(item => {
+      const d = diffDays(item.expiry);
+      const isTrinta = d <= 30;
+      const descText = isTrinta ? "20%" : "15%";
+      // Formata a data e escapa o nome caso tenha aspas ou ponto e vírgula
+      const nameEscaped = item.name.replace(/"/g, '""');
+      csv += `"${nameEscaped}";${item.qty};${fmtDate(item.expiry)};${descText}\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Prateleira_Oportunidade_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="panel p3" style={{ padding: '20px', gap: '16px', gridTemplateColumns: '30fr 35fr 25fr' }}>
+
+      <div className="card" style={{ borderRadius: '10px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="card-title" style={{ flexShrink: 0, fontSize: '0.7rem', letterSpacing: '0.1em', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>🏷️ PRATELEIRA DA OPORTUNIDADE</span>
+          <button 
+            onClick={exportarOportunidadesCSV}
+            title="Baixar lista em formato Excel"
+            style={{ padding: '4px 8px', fontSize: '0.65rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}
+          >
+            📥 Excel
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px', flexShrink: 0 }}>
+          <div onClick={() => setHistoricoModal('salvos')} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px', cursor: 'pointer' }} title="Clique para ver o histórico do mês">
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 500 }}>PRODUTOS SALVOS (MÊS)</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--accent-green)', marginTop: '4px' }}>{hojeSalvos.length}</div>
+          </div>
+          <div onClick={() => setHistoricoModal('perdidos')} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px', cursor: 'pointer' }} title="Clique para ver o histórico do mês">
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 500 }}>PRODUTOS PERDIDOS (MÊS)</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'rgba(229,57,53,0.7)', marginTop: '4px' }}>{hojePerdidos.length}</div>
+          </div>
+        </div>
+
+        <div className="scr" style={{ flex: 1, paddingRight: 0, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {elegiveis.length === 0 ? (
+            <div className="empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none' }}>
+              <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏷️</div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Nenhum produto em oportunidade</div>
+            </div>
+          ) : (
+            elegiveis.map(item => {
+              const d = diffDays(item.expiry);
+              const isTrinta = d <= 30;
+              const descPct = isTrinta ? 20 : 15;
+              const descText = `-${descPct}%`;
+              
+              return (
+                <div key={item.id} className="oportunidade-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', transition: 'border-color 0.15s, opacity 0.3s' }} onMouseOver={e=>e.currentTarget.style.borderColor='rgba(141,198,63,0.3)'} onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}>
+                  
+                  <div style={{ minWidth: '56px' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isTrinta ? '#FB8C00' : 'var(--text-secondary)', display: 'block' }}>{d} dias</span>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', background: 'rgba(141,198,63,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(141,198,63,0.2)', display: 'inline-block', marginTop: '2px' }}>{descText}</span>
+                  </div>
+
+                  <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
+                    <span style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }} title={item.name}>{item.name}</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>Estoque: {item.qty} un</span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <button 
+                      onClick={() => iniciarAcaoOportunidade(item, 'venda_promocional')}
+                      title="Registrar venda com desconto"
+                      style={{ width: '28px', height: '28px', borderRadius: '4px', border: '1px solid rgba(141,198,63,0.25)', background: 'rgba(141,198,63,0.08)', color: 'rgba(141,198,63,0.7)', fontSize: '0.9rem', lineHeight: 1, cursor: 'pointer', transition: 'all 0.15s' }}
+                      onMouseOver={e=>{e.currentTarget.style.borderColor='var(--accent-green)';e.currentTarget.style.color='var(--accent-green)';e.currentTarget.style.background='rgba(141,198,63,0.15)'}}
+                      onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(141,198,63,0.25)';e.currentTarget.style.color='rgba(141,198,63,0.7)';e.currentTarget.style.background='rgba(141,198,63,0.08)'}}
+                    >↓</button>
+                    <button 
+                      onClick={() => iniciarAcaoOportunidade(item, 'perda')}
+                      title="Registrar como perda"
+                      style={{ width: '28px', height: '28px', borderRadius: '4px', border: '1px solid rgba(229,57,53,0.2)', background: 'rgba(229,57,53,0.06)', color: 'rgba(229,57,53,0.5)', fontSize: '0.85rem', lineHeight: 1, cursor: 'pointer', transition: 'all 0.15s' }}
+                      onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(229,57,53,0.6)';e.currentTarget.style.color='rgba(229,57,53,0.8)';e.currentTarget.style.background='rgba(229,57,53,0.1)'}}
+                      onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(229,57,53,0.2)';e.currentTarget.style.color='rgba(229,57,53,0.5)';e.currentTarget.style.background='rgba(229,57,53,0.06)'}}
+                    >✕</button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="card-title" style={{ flexShrink: 0, fontSize: '0.7rem', letterSpacing: '0.1em', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>TOP 10 — VENCIMENTO PRÓXIMO</div>
+        
+        <div className="scr" style={{ flex: 1, paddingRight: 0, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {top10.length === 0 && <div className="empty"><div className="empty-icon">🗒️</div><p>Nenhum produto cadastrado.</p></div>}
+        {top10.map((item, i) => {
+          const d    = diffDays(item.expiry);
+          const st   = statusOf(item.expiry, item.category);
+          
+          let col = 'var(--accent-green)';
+          if (d < 0) col = '#E53935';
+          else if (d <= 30) col = '#FB8C00';
+
+          const label = d < 0 ? `${Math.abs(d)}d vencido` : d === 0 ? 'HOJE!' : d === 1 ? 'AMANHÃ' : `${d} dias`;
+          
+          let badgeBg = 'rgba(141,198,63,0.15)';
+          let badgeCol = 'var(--accent-green)';
+          let badgeBorder = 'rgba(141,198,63,0.3)';
+          let badgeLabel = 'SAUDÁVEL';
+          
+          if (st === 'critical') {
+            badgeBg = 'rgba(229,57,53,0.15)';
+            badgeCol = '#E53935';
+            badgeBorder = 'rgba(229,57,53,0.3)';
+            badgeLabel = 'CRÍTICO';
+          } else if (st === 'warning') {
+            badgeBg = 'rgba(251,140,0,0.15)';
+            badgeCol = '#FB8C00';
+            badgeBorder = 'rgba(251,140,0,0.3)';
+            badgeLabel = 'ATENÇÃO';
+          }
+          
+          return (
+            <div key={item.id} className="top10-item" style={{ 
+              padding: '12px 16px', 
+              borderBottom: '1px solid var(--border)', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '6px', 
+              cursor: 'default', 
+              transition: 'background 0.15s' 
+            }} onMouseOver={e=>e.currentTarget.style.background='var(--bg-elevated)'} onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+              
+              <div className="top10-row-primary" style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', minWidth: '20px', fontWeight: 500 }}>#{i+1}</span>
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>{item.name}</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, whiteSpace: 'nowrap', color: col }}>{label}</span>
+              </div>
+              
+              <div className="top10-row-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '30px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.category || CATS[0]}</span>
+                
+                <span style={{ 
+                  fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap',
+                  background: badgeBg, color: badgeCol, border: `1px solid ${badgeBorder}`
+                }}>
+                  {badgeLabel}
+                </span>
+                
+                <button 
+                  onClick={() => { setActionItem(item); }}
+                  style={{ 
+                    fontSize: '0.72rem', padding: '3px 10px', borderRadius: '4px', border: '1px solid var(--border)', 
+                    background: 'var(--bg-elevated)', color: 'var(--text-secondary)', whiteSpace: 'nowrap',
+                    cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.color = 'var(--accent-green)'; }}
+                  onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                >
+                  Ação
+                </button>
+              </div>
+
+            </div>
+          );
+        })}
+        </div>
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="card-title" style={{ flexShrink: 0, fontSize: '0.7rem', letterSpacing: '0.1em', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px' }}>DISTRIBUIÇÃO POR CATEGORIA</div>
+        
+        <div className="scr" style={{ flex: 1, paddingRight: 0, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '6px', overflowY: 'auto' }}>
+        {byCat.length === 0 && <div className="empty"><div className="empty-icon">📈</div><p>Sem dados ainda.</p></div>}
+        {byCat.map(([cat, v]) => {
+          let borderLeftColor = 'rgba(141,198,63,0.3)';
+          if (v.critical > 0) borderLeftColor = 'rgba(229,57,53,0.5)';
+          else if (v.warning > 0) borderLeftColor = 'rgba(251,140,0,0.4)';
+
+          return (
+            <div key={cat} className="categoria-bloco" style={{
+              background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderLeft: `3px solid ${borderLeftColor}`, borderRadius: '6px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px', transition: 'border-color 0.15s'
+            }} onMouseOver={e=>e.currentTarget.style.borderColor='rgba(141,198,63,0.25)'} onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{cat}</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{v.total} itens</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {v.critical > 0 && (
+                  <span className="status-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap', background: 'rgba(229,57,53,0.1)', border: '1px solid rgba(229,57,53,0.25)', color: '#E53935' }}>
+                    ● Crítico {v.critical}
+                  </span>
+                )}
+                {v.warning > 0 && (
+                  <span className="status-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap', background: 'rgba(251,140,0,0.1)', border: '1px solid rgba(251,140,0,0.25)', color: '#FB8C00' }}>
+                    ● Atenção {v.warning}
+                  </span>
+                )}
+                {v.ok > 0 && (
+                  <span className="status-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap', background: 'rgba(141,198,63,0.08)', border: '1px solid rgba(141,198,63,0.2)', color: 'var(--accent-green)' }}>
+                    ● Saudável {v.ok}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        </div>
+      </div>
+
+      {actionItem && (
+        <div className="modal-bg no-print" onClick={() => setActionItem(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign:'center' }}>
+            <h2 style={{ fontSize:18, fontWeight:900, marginBottom:15, color:'var(--yellow2)' }}>💡 Dica do Mané</h2>
+            
+            <div style={{ background: 'var(--surface2)', padding: '12px', borderRadius: '10px', marginBottom: '15px', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{actionItem.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Vence em: <strong style={{ color: diffDays(actionItem.expiry) < 30 ? 'var(--red)' : 'var(--orange)' }}>{diffDays(actionItem.expiry)} dias</strong></div>
+            </div>
+
+            <div style={{ textAlign: 'left', marginBottom: 20 }}>
+              <h4 style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>Estratégias Recomendadas:</h4>
+              <ul style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text2)', paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {actionItem.category === 'Farmácia' ? (
+                  <>
+                    <li><strong>📉 Giro Rápido:</strong> Oferecer descontos progressivos para queima de estoque.</li>
+                    <li><strong>🏥 Venda Casada:</strong> Oferecer junto com consultas ou vacinas.</li>
+                    <li><strong>👁️ Visibilidade:</strong> Destacar no balcão de atendimento.</li>
+                  </>
+                ) : actionItem.category === 'Rações de Cães' || actionItem.category === 'Rações de Gatos' ? (
+                  <>
+                    <li><strong>📉 Volume:</strong> Negociar o saco fechado com cliente frequente.</li>
+                    <li><strong>⚖️ Granel:</strong> Abrir o saco e vender a granel (aumenta o giro).</li>
+                    <li><strong>🔥 Ponto Quente:</strong> Expor na entrada da loja.</li>
+                  </>
+                ) : actionItem.category === 'Petiscos' ? (
+                  <>
+                    <li><strong>📉 Promoção:</strong> Combo "Leve 3, Pague 2".</li>
+                    <li><strong>🐕 Impulso:</strong> Oferecer degustação para os pets na loja.</li>
+                    <li><strong>👁️ Visibilidade:</strong> Pendurar em fitas cross próximo ao caixa.</li>
+                  </>
+                ) : actionItem.category === 'Higiêne e Beleza' ? (
+                  <>
+                    <li><strong>📉 Giro:</strong> Incluir como brinde em serviços de valor mais alto.</li>
+                    <li><strong>🛁 Uso Interno:</strong> Enviar para uso no Banho & Tosa da loja.</li>
+                    <li><strong>📦 Combos:</strong> Montar kit banho (Shampoo + Condicionador).</li>
+                  </>
+                ) : (
+                  <>
+                    <li><strong>📉 Liquidação:</strong> Expor em cesto de ofertas para queima rápida.</li>
+                    <li><strong>📦 Combo:</strong> Fazer kits com itens complementares.</li>
+                    <li><strong>🏷️ Visibilidade:</strong> Destacar com etiqueta de "Oferta Especial".</li>
+                  </>
+                )}
+              </ul>
+            </div>
+
+            <div style={{ display:'flex', gap:10 }}>
+              <button className="btn btn-ghost btn-full" onClick={() => setActionItem(null)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {historicoModal && (
+        <div className="modal-bg no-print" onClick={() => setHistoricoModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ width: '400px' }}>
+            <div className="modal-title">
+              {historicoModal === 'salvos' ? '✅ Produtos Salvos no Mês' : '❌ Produtos Perdidos no Mês'}
+            </div>
+            <div className="scr" style={{ maxHeight: '300px', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+              {(historicoModal === 'salvos' ? hojeSalvos : hojePerdidos).length === 0 ? (
+                <div className="empty" style={{ background: 'transparent', border: 'none' }}><p>Nenhum produto registrado neste mês.</p></div>
+              ) : (
+                (historicoModal === 'salvos' ? hojeSalvos : hojePerdidos).map((i, idx) => (
+                  <div key={idx} style={{ padding: '8px', background: 'var(--bg-elevated)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>{i.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{new Date(i.data_baixa).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{i.total_qty} un. • {i.category}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--accent-green)', fontWeight: 600 }}>Realizado por {i.usuario || 'Desconhecido'}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <button className="btn btn-ghost btn-full" style={{ marginTop: '12px' }} onClick={() => setHistoricoModal(null)}>Fechar</button>
+          </div>
+        </div>
+      )}
+
+      {acaoPendente && (
+        <div className="modal-bg no-print" onClick={() => setAcaoPendente(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ width: '320px', textAlign: 'center' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: acaoPendente.tipo === 'perda' ? 'var(--red)' : 'var(--green)', marginBottom: 15 }}>
+              {acaoPendente.tipo === 'perda' ? 'Registrar Perda' : 'Venda Promocional'}
+            </h2>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+              Quantas unidades de <strong>{acaoPendente.item.name}</strong>?
+            </div>
+            <div className="field" style={{ marginBottom: 20 }}>
+              <input 
+                type="number" min="1" max={acaoPendente.max} 
+                value={acaoQtdDigitada} 
+                onChange={e => setAcaoQtdDigitada(e.target.value)} 
+                style={{ textAlign: 'center', fontSize: 24, padding: '10px', width: '100px', margin: '0 auto', display: 'block' }} 
+                autoFocus 
+              />
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>Máximo disponível: {acaoPendente.max} un</div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-ghost btn-full" onClick={() => setAcaoPendente(null)}>Cancelar</button>
+              <button className="btn btn-green btn-full" style={{ background: acaoPendente.tipo === 'perda' ? 'var(--red)' : 'var(--green)' }} onClick={confirmarAcaoOportunidade}>
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+/* ── MODAL DE CONFIGURAÇÕES ── */
+function ConfigModal({ config, setConfig, onClose, toast }) {
+  const [token, setToken] = useState(config.telegram_token || '');
+  const [chat, setChat] = useState(config.telegram_chat_id || '');
+  
+  const [usuarios, setUsuarios] = useState(() => {
+    try { return config.usuarios ? JSON.parse(config.usuarios) : []; }
+    catch(e) { return []; }
+  });
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [novoUserNome, setNovoUserNome] = useState('');
+  const [novoUserSenha, setNovoUserSenha] = useState('');
+
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  const save = async () => {
+    await db.saveConfig('telegram_token', token.trim());
+    await db.saveConfig('telegram_chat_id', chat.trim());
+    setConfig({ ...config, telegram_token: token.trim(), telegram_chat_id: chat.trim() });
+    toast('Configurações salvas com sucesso!');
+    onClose();
+  };
+
+  const testarAlerta = async () => {
+    await db.testAlert();
+    toast('Comando de teste enviado ao servidor!');
+  };
+
+  const testarBackup = async () => {
+    await db.testBackup();
+    toast('Comando de backup enviado ao servidor!');
+  };
+
+  const exportarJSON = async () => {
+    const data = await db.loadStock();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_agromane_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    toast('Backup JSON exportado com sucesso!');
+  };
+
+  const handleImportJson = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const json = JSON.parse(ev.target.result);
+        if (!Array.isArray(json)) throw new Error('O arquivo não contém um array válido.');
+        const res = await db.importJson(json);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        toast(`Importados ${data.count} itens com sucesso! Atualizando...`);
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (err) {
+        alert('Erro ao importar JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div className="modal-bg no-print" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">⚙️ Ajustes do Sistema</div>
+        <details style={{ background:'var(--surface2)', borderRadius:8, fontSize:12, color:'var(--text2)', marginBottom:15, cursor:'pointer' }}>
+          <summary style={{ padding: 12, fontWeight: 700, outline: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '14px' }}>❓</span> Como configurar o Bot do Telegram?
+          </summary>
+          <div style={{ padding: '0 12px 12px 12px', lineHeight:1.5 }}>
+            <strong>1.</strong> Crie um bot no Telegram falando com o <strong>@BotFather</strong>.<br/>
+            <strong>2.</strong> Cole o <strong>Token</strong> do bot abaixo.<br/>
+            <strong>3.</strong> Pegue o seu <strong>Chat ID</strong> mandando mensagem para o bot <strong>@userinfobot</strong>.<br/>
+            <em style={{ color: 'var(--text3)' }}>(Dica: Para grupos, adicione o bot no grupo e use o Chat ID negativo ex: -123456)</em>
+          </div>
+        </details>
+        <div className="field" style={{ marginBottom: 12 }}><label>Bot Token</label><input value={token} onChange={e => setToken(e.target.value)} placeholder="Ex: 729183:AAH_Xx..." /></div>
+        <div className="field" style={{ marginBottom: 12 }}><label>Chat ID (Destinatário)</label><input value={chat} onChange={e => setChat(e.target.value)} placeholder="Ex: 123456789" /></div>
+
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-yellow btn-full" onClick={save}>Salvar Configurações</button>
+          <button className="btn btn-ghost btn-full" onClick={onClose}>Cancelar</button>
+        </div>
+        <div style={{ marginTop: 15, borderTop: '1px dashed var(--border)', paddingTop: 15 }}>
+          <button className="btn btn-outline btn-full" onClick={testarAlerta} style={{ fontSize: 12 }}>🧪 Testar Alerta de Estoque Crítico Agora</button>
+          <button className="btn btn-outline btn-full" onClick={testarBackup} style={{ fontSize: 12, marginTop: 8 }}>📦 Testar Envio de Backup no Telegram</button>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
+            <button className="btn btn-outline" onClick={exportarJSON} style={{ fontSize: 12, margin: 0 }}>⬇️ Exportar JSON</button>
+            <label className="btn btn-outline" style={{ fontSize: 12, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: '8px' }}>
+              ⬆️ Importar JSON
+              <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportJson} />
+            </label>
+          </div>
+          
+          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8, textAlign: 'center', lineHeight: 1.4 }}>Você pode salvar ou restaurar um backup completo localmente via JSON.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── EQUIPE CONFIG MODAL ── */
+function EquipeConfigModal({ config, setConfig, onClose, toast }) {
+  const [usuarios, setUsuarios] = useState(() => {
+    try { return config.usuarios ? JSON.parse(config.usuarios) : []; }
+    catch(e) { return []; }
+  });
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [novoUserNome, setNovoUserNome] = useState('');
+  const [novoUserSenha, setNovoUserSenha] = useState('');
+  
+  const [gameMeta, setGameMeta] = useState(config.game_meta || '10');
+  const [gameMsg, setGameMsg] = useState(config.game_msg || 'Muito boom, de hoje ta pago. Bora vender agora');
+
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  const save = async () => {
+    let us = usuarios;
+    if (us.length === 0) us = [{ nome: 'Admin', senha: config.admin_password || '4547' }];
+    await db.saveConfig('usuarios', JSON.stringify(us));
+    await db.saveConfig('game_meta', gameMeta);
+    await db.saveConfig('game_msg', gameMsg);
+
+    setConfig({ ...config, usuarios: JSON.stringify(us), game_meta: gameMeta, game_msg: gameMsg });
+    toast('Configurações de equipe salvas com sucesso!');
+    onClose();
+  };
+
+  return (
+    <div className="modal-bg no-print" onClick={onClose} style={{ zIndex: 999 }}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">👥 Configurações da Equipe</div>
+        
+        <div style={{ marginBottom: 15 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h3 style={{ fontSize: 13, color: 'var(--text)', margin: 0 }}>Vendedores Cadastrados</h3>
+            <button className="btn btn-outline" style={{ margin: 0, padding: '4px 8px', fontSize: 11 }} onClick={() => setShowAddUser(true)}>+ Adicionar</button>
+          </div>
+          <div className="scr" style={{ maxHeight: 110, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {usuarios.length === 0 ? <div style={{fontSize:12, color:'var(--text3)'}}>Nenhum usuário cadastrado.</div> : 
+             usuarios.map((u, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)', border: '1px solid var(--border)', padding: '6px 10px', borderRadius: 6 }}>
+                <span style={{ fontSize: 13 }}><strong>{u.nome}</strong> (Senha: {u.senha})</span>
+                <button className="btn btn-danger" onClick={() => setUsuarios(usuarios.filter((_, idx) => idx !== i))} style={{ padding: '4px 8px', fontSize: 11 }}>Excluir</button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 15, marginBottom: 15 }}>
+          <h3 style={{ fontSize: 13, color: 'var(--text)', margin: '0 0 10px 0' }}>🎮 Configurações do Game (Gamificação)</h3>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Meta Diária de Bipes</label>
+            <input type="number" value={gameMeta} onChange={e => setGameMeta(e.target.value)} placeholder="Ex: 10" />
+          </div>
+          <div className="field">
+            <label>Mensagem de Vitória</label>
+            <input value={gameMsg} onChange={e => setGameMsg(e.target.value)} placeholder="Ex: Muito bom, de hoje ta pago!" />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-yellow btn-full" onClick={save}>Salvar Alterações</button>
+          <button className="btn btn-ghost btn-full" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+      
+      {showAddUser && (
+        <div className="modal-bg" style={{ zIndex: 9999 }} onClick={() => setShowAddUser(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ width: 280 }}>
+            <h3 style={{ fontSize: 15, marginBottom: 15, fontWeight: 700 }}>Adicionar Vendedor</h3>
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>Nome do Vendedor</label>
+              <input value={novoUserNome} onChange={e => setNovoUserNome(e.target.value)} placeholder="Ex: João" autoFocus />
+            </div>
+            <div className="field" style={{ marginBottom: 20 }}>
+              <label>Senha Numérica</label>
+              <input type="number" value={novoUserSenha} onChange={e => setNovoUserSenha(e.target.value)} placeholder="Ex: 1234" maxLength={4} />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-green btn-full" onClick={() => { if(novoUserNome && novoUserSenha) { setUsuarios([...usuarios, {nome: novoUserNome, senha: novoUserSenha}]); setNovoUserNome(''); setNovoUserSenha(''); setShowAddUser(false); } }}>Salvar</button>
+              <button className="btn btn-ghost btn-full" onClick={() => setShowAddUser(false)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── RELATORIO SEMANAL MODAL ── */
+function RelatorioSemanalModal({ stock, baixas, config, onClose }) {
+  const gameMeta = parseInt(config.game_meta || '10', 10);
+  
+  // Calculate Monday to Friday of current week
+  const today = new Date();
+  const day = today.getDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+  const diffToMon = day === 0 ? -6 : 1 - day;
+  
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMon);
+  monday.setHours(0,0,0,0);
+  
+  const friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+  friday.setHours(23,59,59,999);
+
+  // Stats
+  const usersStats = {};
+
+  // 1. Process Baixas (Sales vs Discard)
+  const baixasSemana = baixas.filter(b => {
+    const d = new Date(b.data_baixa);
+    return d >= monday && d <= friday;
+  });
+  
+  baixasSemana.forEach(b => {
+    const u = b.usuario || 'Desconhecido';
+    if (!usersStats[u]) usersStats[u] = { salvos: 0, perdidos: 0, daysHit: 0 };
+    if (b.tipo_baixa === 'venda') usersStats[u].salvos += b.quantidade;
+    if (b.tipo_baixa === 'perda') usersStats[u].perdidos += b.quantidade;
+  });
+
+  // 2. Process Streaks (Mon-Fri) using Config History
+  const daysArr = [0, 1, 2, 3, 4].map(offset => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + offset);
+    return d.toISOString().split('T')[0];
+  });
+
+  // Init users from config
+  let usuariosCadastrados = [];
+  try { usuariosCadastrados = config.usuarios ? JSON.parse(config.usuarios) : []; } catch(e) {}
+  usuariosCadastrados.forEach(u => {
+    if (!usersStats[u.nome]) usersStats[u.nome] = { salvos: 0, perdidos: 0, daysHit: 0 };
+  });
+
+  Object.keys(usersStats).forEach(u => {
+    daysArr.forEach(dt => {
+      const kpiKey = `bipe_${dt}_${u}`;
+      const scoreFromConfig = parseInt(config[kpiKey] || '0', 10);
+      const scoreFromStock = stock.filter(i => i.ultimo_vendedor === u && i.atualizado_em && i.atualizado_em.startsWith(dt)).length;
+      const finalScore = Math.max(scoreFromConfig, scoreFromStock);
+      
+      if (finalScore >= gameMeta) {
+        usersStats[u].daysHit++;
+      }
+    });
+  });
+
+  const usersList = Object.entries(usersStats).sort((a, b) => b[1].daysHit - a[1].daysHit || b[1].salvos - a[1].salvos);
+
+  return (
+    <div className="modal-bg no-print" onClick={onClose} style={{ zIndex: 999 }}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ width: 450, padding: 24 }}>
+        <div className="modal-title" style={{ marginBottom: 10 }}>📊 Relatório Semanal</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20 }}>
+          Semana Atual: {monday.toLocaleDateString('pt-BR')} até {friday.toLocaleDateString('pt-BR')}
+        </div>
+        
+        {usersList.length === 0 ? (
+           <div className="empty" style={{ background: 'transparent', border: 'none' }}><p>Sem dados registrados nesta semana.</p></div>
+        ) : (
+          <div className="scr" style={{ maxHeight: 350, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {usersList.map(([u, stat], idx) => (
+              <div key={u} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>{idx + 1}º {u}</div>
+                  <div style={{ background: stat.daysHit === 5 ? 'rgba(255,87,34,0.1)' : 'var(--bg-surface)', border: stat.daysHit === 5 ? '1px solid #FF5722' : '1px solid var(--border)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, color: stat.daysHit === 5 ? '#FF5722' : 'var(--text-secondary)' }}>
+                    {stat.daysHit === 5 && <span style={{marginRight:5}}>🔥</span>}
+                    Meta: {stat.daysHit}/5 dias
+                  </div>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div style={{ background: 'rgba(141,198,63,0.1)', border: '1px solid rgba(141,198,63,0.3)', borderRadius: 6, padding: 10, textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: 'var(--accent-green)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Salvos da Perda</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--accent-green)', marginTop: 4 }}>{stat.salvos} un</div>
+                  </div>
+                  <div style={{ background: 'rgba(229,57,53,0.1)', border: '1px solid rgba(229,57,53,0.3)', borderRadius: 6, padding: 10, textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Descartes (Lixo)</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--red)', marginTop: 4 }}>{stat.perdidos} un</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <button className="btn btn-ghost btn-full" style={{ marginTop: 20 }} onClick={onClose}>Fechar Relatório</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── EQUIPE TAB (Auditoria) ── */
+function EquipeTab({ stock, config, setConfig, toast }) {
+  const [baixas, setBaixas] = useState([]);
+  const [showEquipeConfig, setShowEquipeConfig] = useState(false);
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const gameMeta = parseInt(config.game_meta || '10', 10);
+  
+  useEffect(() => {
+    db.loadBaixas().then(setBaixas);
+  }, []);
+  const hoje = new Date().toISOString().split('T')[0];
+  const byUser = useMemo(() => {
+    const map = {};
+    
+    let usuariosCadastrados = [];
+    try { usuariosCadastrados = config.usuarios ? JSON.parse(config.usuarios) : []; } catch(e) {}
+    
+    // Initialize all users
+    usuariosCadastrados.forEach(u => {
+      map[u.nome] = { totalHoje: parseInt(config[`bipe_${hoje}_${u.nome}`] || '0', 10), items: [] };
+    });
+
+    stock.forEach(i => {
+      if (i.ultimo_vendedor) {
+        if (!map[i.ultimo_vendedor]) map[i.ultimo_vendedor] = { totalHoje: parseInt(config[`bipe_${hoje}_${i.ultimo_vendedor}`] || '0', 10), items: [] };
+        // If stock has more scans for today than config, use stock (fallback)
+        const stockScans = stock.filter(st => st.ultimo_vendedor === i.ultimo_vendedor && st.atualizado_em && st.atualizado_em.startsWith(hoje)).length;
+        map[i.ultimo_vendedor].totalHoje = Math.max(map[i.ultimo_vendedor].totalHoje, stockScans);
+        
+        map[i.ultimo_vendedor].items.push(i);
+      }
+    });
+    
+    Object.keys(map).forEach(k => {
+      map[k].items.sort((a, b) => new Date(b.atualizado_em) - new Date(a.atualizado_em));
+      map[k].items = map[k].items.slice(0, 20); // Top 20 history per user
+    });
+    return map;
+  }, [stock, hoje, config]);
+
+  return (
+    <div className="panel p3" style={{ padding: '20px', gap: '20px', gridTemplateColumns: '30fr 70fr' }}>
+      
+      <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', alignSelf: 'start' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>👥 Engajamento Diário</h2>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => setShowRelatorio(true)} className="btn btn-config" title="Relatório Semanal" style={{ padding: '6px', fontSize: '18px', width: '32px', height: '32px', lineHeight: 1 }}>
+              📊
+            </button>
+            <button onClick={() => setShowEquipeConfig(true)} className="btn btn-config" title="Configurações da Equipe" style={{ padding: '6px', width: '32px', height: '32px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+          </div>
+        </div>
+        {Object.entries(byUser).map(([name, data]) => (
+          <div key={name} style={{ background: data.totalHoje >= gameMeta ? 'rgba(255,87,34,0.05)' : 'var(--bg-elevated)', padding: 15, borderRadius: 10, border: data.totalHoje >= gameMeta ? '2px solid #FF5722' : '1px solid var(--border)', transition: 'all 0.2s' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{name}</div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: data.totalHoje >= gameMeta ? '#FF5722' : 'var(--accent-green)', marginTop: 8 }}>
+              {data.totalHoje} / {gameMeta}
+              {data.totalHoje >= gameMeta && <span style={{ marginLeft: 8 }} title="Meta diária atingida!">🔥</span>}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Bipes hoje</div>
+          </div>
+        ))}
+        {Object.keys(byUser).length === 0 && <p style={{ fontSize:13, color:'var(--text-muted)' }}>Nenhuma atividade registrada hoje.</p>}
+      </div>
+      
+      <div className="card scr" style={{ overflowY: 'auto', padding: 0 }}>
+        <h2 style={{ padding: '20px 20px 10px 20px', fontSize: 16, fontWeight: 800 }}>📋 Histórico Global de Validades</h2>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-surface)' }}>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              <th style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 12 }}>Data/Hora</th>
+              <th style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 12 }}>Vendedor</th>
+              <th style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 12 }}>Produto</th>
+              <th style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 12 }}>Validade Informada</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stock.filter(i => i.ultimo_vendedor && i.atualizado_em).sort((a, b) => new Date(b.atualizado_em) - new Date(a.atualizado_em)).slice(0, 100).map(item => {
+               const st = statusOf(item.expiry, item.category);
+               return (
+                <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '12px 20px', fontSize: 13, color: 'var(--text-secondary)' }}>{new Date(item.atualizado_em).toLocaleString('pt-BR')}</td>
+                  <td style={{ padding: '12px 20px', fontSize: 13, fontWeight: 700, color: 'var(--accent-green)' }}>{item.ultimo_vendedor}</td>
+                  <td style={{ padding: '12px 20px', fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{item.name}</td>
+                  <td style={{ padding: '12px 20px', fontSize: 13 }}><span className={`badge ${SM[st].cls}`}>{fmtDate(item.expiry)}</span></td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {showRelatorio && <RelatorioSemanalModal stock={stock} baixas={baixas} config={config} onClose={() => setShowRelatorio(false)} />}
+      {showEquipeConfig && <EquipeConfigModal config={config} setConfig={setConfig} onClose={() => setShowEquipeConfig(false)} toast={toast} />}
+    </div>
+  );
+}
+
+/* ── APP ── */
+function App() {
+  const [tab,       setTab]     = useState('capture');
+  const [fSt,       setFSt]     = useState('all');
+  const [stock,     setStock]   = useState([]);
+  const [config,    setConfig]  = useState({});
+  const [showConfig,setShowConfig] = useState(false);
+  const [toastData, setToast]   = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('agromane_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch(e) { return null; }
+  });
+  const [senha,     setSenha]   = useState('');
+  const [showTodayAlert, setShowTodayAlert] = useState(false);
+  const [hasCheckedToday, setHasCheckedToday] = useState(false);
+
+  const userKPI = useMemo(() => {
+    if (!currentUser) return 0;
+    const hoje = new Date().toISOString().split('T')[0];
+    const kpiKey = `bipe_${hoje}_${currentUser.nome}`;
+    const configScore = parseInt(config[kpiKey] || '0', 10);
+    const stockScore = stock.filter(i => i.ultimo_vendedor === currentUser.nome && i.atualizado_em && i.atualizado_em.startsWith(hoje)).length;
+    return Math.max(configScore, stockScore);
+  }, [stock, currentUser, config]);
+
+  useEffect(() => {
+    if (currentUser) {
+      db.loadStock().then(setStock);
+      db.loadConfig().then(setConfig);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser && stock.length > 0 && !hasCheckedToday) {
+      const vencendoHoje = stock.filter(i => diffDays(i.expiry) <= 0);
+      if (vencendoHoje.length > 0) {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          osc.type = 'square'; osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.4);
+        } catch(e) {}
+        setShowTodayAlert(true);
+      }
+      setHasCheckedToday(true);
+    }
+  }, [currentUser, stock, hasCheckedToday]);
+
+  const toast   = (msg, type = 'ok') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500) };
+  const refresh = async () => setStock(await db.loadStock());
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const conf = await db.loadConfig();
+    let usuarios = [];
+    try { usuarios = conf.usuarios ? JSON.parse(conf.usuarios) : []; } catch(e) {}
+    if (usuarios.length === 0) {
+      usuarios = [{ nome: 'Admin', senha: conf.admin_password || '4547' }];
+    }
+    const user = usuarios.find(u => u.senha === senha);
+    if (user) {
+      setCurrentUser(user);
+      localStorage.setItem('agromane_user', JSON.stringify(user));
+    } else {
+      alert('Senha incorreta!');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('agromane_user');
+  };
+
+  const handleShutdown = async () => {
+    if (!confirm('Deseja realmente encerrar o sistema? Isso desligará o servidor no terminal.')) return;
+    try {
+      await fetch(`${API_URL}/shutdown`, { method: 'POST' });
+      document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#1c1c1e;color:white;font-family:sans-serif;text-align:center;"><div><h1 style="color:#f5c518;margin-bottom:10px;">Servidor Desligado</h1><p>Você já pode fechar esta aba com segurança.</p></div></div>';
+    } catch (e) {}
+  };
+
+  if (!currentUser) {
+    return (
+      <div style={{ display:'flex', height:'100vh', alignItems:'center', justifyContent:'center', background:'var(--bg)' }}>
+        <form onSubmit={handleLogin} className="card" style={{ width: 320, padding: 30, alignItems:'center' }}>
+          <div className="header-title" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 11C11 6.02944 6.97056 2 2 2C2 6.97056 6.02944 11 11 11Z" fill="var(--accent-green)" />
+              <path d="M13 11C13 6.02944 17.0294 2 22 2C22 6.02944 17.0294 11 13 11Z" fill="var(--accent-green)" />
+              <path d="M11 13C11 17.9706 6.97056 22 2 22C2 17.9706 6.02944 13 11 13Z" fill="var(--accent-green)" />
+              <path d="M13 13C13 17.9706 17.0294 22 22 22C22 17.9706 17.0294 13 13 13Z" fill="var(--accent-green)" />
+            </svg>
+            <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>Agro Mané</span> Login
+          </div>
+          <div className="field" style={{ width: '100%', marginBottom: 20 }}>
+            <label>Senha de Acesso</label>
+            <input type="password" value={senha} onChange={e => setSenha(e.target.value)} placeholder="Senha numérica de 4 dígitos" autoFocus />
+          </div>
+          <button type="submit" className="btn btn-yellow btn-full">Entrar no Sistema</button>
+        </form>
+      </div>
+    );
+  }
+
+  const gameMeta = parseInt(config.game_meta || '10', 10);
+  const gameMsg = config.game_msg || 'Muito boom, de hoje ta pago. Bora vender agora';
+
+  return (
+    <div className="app">
+      <Header onLogout={handleLogout} onShutdown={handleShutdown} onConfig={() => setShowConfig(true)} currentUser={currentUser} userKPI={userKPI} gameMeta={gameMeta} />
+      <KpiBar stock={stock} onFilterClick={s => { setFSt(s); setTab('stock'); }} />
+      <Tabs active={tab} onChange={setTab} />
+      <div style={{ overflow:'hidden' }}>
+        {tab === 'capture' && <CaptureTab onSave={refresh} toast={toast} stock={stock} currentUser={currentUser} gameMeta={gameMeta} gameMsg={gameMsg} config={config} setConfig={setConfig} />}
+        {tab === 'receive' && <RecebimentoTab onSave={refresh} toast={toast} />}
+        {tab === 'stock'   && <StockTab stock={stock} setStock={setStock} toast={toast} config={config} fSt={fSt} setFSt={setFSt} currentUser={currentUser} />}
+        {tab === 'inventory' && <InventoryTab stock={stock} setStock={setStock} toast={toast} />}
+        {tab === 'dash'    && <DashTab stock={stock} config={config} toast={toast} setStock={setStock} currentUser={currentUser} />}
+        {tab === 'equipe'  && <EquipeTab stock={stock} config={config} setConfig={setConfig} toast={toast} />}
+      </div>
+      <footer className="footer">
+        <span>Desenvolvido por: <strong>Matheus Henrique</strong></span>
+        <span style={{ fontFamily:'Inter', fontSize:10, letterSpacing:'.1em' }}>Gestão Inteligente de Validades - Agro Mané © {new Date().getFullYear()}</span>
+      </footer>
+      {toastData && <Toast msg={toastData.msg} type={toastData.type} onClose={() => setToast(null)} />}
+      
+      {showConfig && <ConfigModal config={config} setConfig={setConfig} onClose={() => setShowConfig(false)} toast={toast} />}
+
+      {/* Alerta de Produtos Vencendo Hoje */}
+      {showTodayAlert && (
+        <div className="modal-bg no-print" style={{ zIndex: 99999 }}>
+          <div className="modal" style={{ textAlign:'center', border:'3px solid var(--red)' }}>
+            <div style={{ fontSize:40, marginBottom:10 }}>🚨</div>
+            <h2 style={{ fontSize:22, fontWeight:900, color:'var(--red)', marginBottom:10 }}>Atenção Máxima!</h2>
+            <p style={{ fontSize:15, color:'var(--text2)', marginBottom:20 }}>Existem produtos no seu estoque que <strong>vencem HOJE</strong> (ou já estão vencidos). Verifique o Dashboard imediatamente!</p>
+            <button className="btn btn-danger btn-full" style={{ padding:12, fontSize:16 }} onClick={() => setShowTodayAlert(false)}>Ciente, vou verificar!</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
