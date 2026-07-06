@@ -890,7 +890,7 @@ function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, conf
                     borderBottom: '1px solid var(--border)',
                     transition: 'all 0.2s',
                   }} onMouseOver={e=>e.currentTarget.style.background='var(--bg-elevated)'} onMouseOut={e=>e.currentTarget.style.background='transparent'}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }} title={item.name}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, flex: 1, color: 'var(--text-primary)', lineHeight: '1.4' }} title={item.name}>
                       {item.name}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
@@ -919,7 +919,6 @@ function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, conf
 
 /* ── RECEBIMENTO TAB (DANFE) ── */
 function RecebimentoTab({ onSave, toast }) {
-  const [chave, setChave] = useState('');
   const [pendingItems, setPendingItems] = useState([]);
   const [loading, setLoad] = useState(false);
 
@@ -930,31 +929,46 @@ function RecebimentoTab({ onSave, toast }) {
     setLoad(true);
     const reader = new FileReader();
     reader.onload = async (ev) => {
-      const xml = ev.target.result;
+      const xmlText = ev.target.result;
       try {
-        const res = await fetch(`${API_URL}/estoque/importar-xml`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ xml })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlText, 'text/xml');
+        const detList = doc.getElementsByTagName('det');
+        
+        const data = [];
+        for (let i = 0; i < detList.length; i++) {
+            const det = detList[i];
+            const prod = det.getElementsByTagName('prod')[0];
+            if (prod) {
+                const eanNode = prod.getElementsByTagName('cEAN')[0];
+                const nameNode = prod.getElementsByTagName('xProd')[0];
+                
+                const ean = eanNode ? eanNode.textContent : '';
+                const name = nameNode ? nameNode.textContent : '';
+                
+                // Ignorar EANs inválidos como "SEM GTIN" ou vazios
+                if (ean && ean !== 'SEM GTIN' && ean.length > 5) {
+                    // Previne duplicações se o mesmo XML tiver vários itens iguais
+                    if (!data.find(d => d.ean === ean)) {
+                        data.push({ ean, name });
+                    }
+                }
+            }
+        }
         
         if (data.length === 0) {
-            toast('Nenhum produto encontrado neste XML.', 'warn');
+            toast('Nenhum produto válido encontrado neste XML.', 'warn');
             return;
         }
 
         const items = data.map(item => ({
           ...item,
-          id: uid(),
-          expiry: '',
-          category: CATS[0]
+          id: uid()
         }));
         setPendingItems(items);
-        toast(`${items.length} produtos carregados do XML!`);
+        toast(`${items.length} produtos encontrados no XML!`);
       } catch (err) {
-        toast('Erro: ' + err.message, 'error');
+        toast('Erro ao processar XML: ' + err.message, 'error');
       } finally {
         setLoad(false);
       }
@@ -963,22 +977,26 @@ function RecebimentoTab({ onSave, toast }) {
   };
 
   const confirmImport = async () => {
-    const missing = pendingItems.filter(i => !i.expiry);
-    if (missing.length > 0) {
-      toast('Preencha a data de validade de todos os itens em amarelo!', 'error');
-      return;
-    }
-
     setLoad(true);
-    for (const item of pendingItems) {
-      let finalEan = item.ean || ('INT-' + Math.floor(10000 + Math.random() * 90000));
-      await db.addItem({ id: uid(), ean: finalEan, name: item.name, category: item.category, qty: Number(item.qty), expiry: item.expiry, price: 0 });
-      if (!finalEan.startsWith('INT-')) await db.addDict(finalEan, item.name);
+    try {
+        const itemsToSave = pendingItems.map(i => ({ ean: i.ean, name: i.name }));
+        
+        const res = await fetch(`${API_URL}/dict/batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(itemsToSave)
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        
+        toast(`${itemsToSave.length} produtos salvos no dicionário!`);
+        setPendingItems([]);
+        onSave();
+    } catch(err) {
+        toast('Erro: ' + err.message, 'error');
+    } finally {
+        setLoad(false);
     }
-    toast(`${pendingItems.length} produtos adicionados ao estoque com sucesso!`);
-    setPendingItems([]);
-    setLoad(false);
-    onSave();
   };
 
   return (
@@ -986,8 +1004,8 @@ function RecebimentoTab({ onSave, toast }) {
       {pendingItems.length === 0 ? (
         <div className="card" style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, borderStyle:'dashed', borderWidth: 2, borderColor:'var(--border2)' }}>
           <div style={{ fontSize:40, marginBottom:10 }}>🧾</div>
-          <h2 style={{ fontSize:18, fontWeight:900, color:'var(--text)', marginBottom:5 }}>Entrada de Nota Fiscal</h2>
-          <p style={{ fontSize:13, color:'var(--text3)', marginBottom:20, textAlign:'center' }}>Faça o upload do arquivo XML da Nota Fiscal para importar os produtos.</p>
+          <h2 style={{ fontSize:18, fontWeight:900, color:'var(--text)', marginBottom:5 }}>Alimentar Dicionário via DANFE</h2>
+          <p style={{ fontSize:13, color:'var(--text3)', marginBottom:20, textAlign:'center' }}>Faça o upload do arquivo XML da Nota Fiscal para extrair EANs e Nomes para o Dicionário.</p>
           
           <label style={{ cursor: 'pointer', background: 'var(--yellow)', padding: '12px 24px', borderRadius: '10px', fontWeight: 800, color: '#111', transition: '.2s' }}>
              📁 Importar Arquivo XML
@@ -995,7 +1013,7 @@ function RecebimentoTab({ onSave, toast }) {
           </label>
           
           <div style={{ marginTop: 20, fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
-            (A leitura automática via Chave DANFE exige Certificado Digital A1/A3)
+            (Isso não dará entrada no estoque, apenas "ensinará" novos produtos ao sistema)
           </div>
           {loading && <div style={{ marginTop: 15 }}><span className="spin"/></div>}
         </div>
@@ -1003,12 +1021,12 @@ function RecebimentoTab({ onSave, toast }) {
         <>
           <div className="card" style={{ padding:'12px 16px', flexDirection:'row', justifyContent:'space-between', alignItems:'center', flex:'0 0 auto' }}>
             <div>
-              <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Conferência de Recebimento</div>
-              <div style={{ fontSize:12, color:'var(--text3)' }}>Preencha as validades para dar entrada no estoque.</div>
+              <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Revisão de Produtos da Nota</div>
+              <div style={{ fontSize:12, color:'var(--text3)' }}>Edite os nomes se desejar antes de salvar no dicionário.</div>
             </div>
             <div style={{ display:'flex', gap:10 }}>
               <button className="btn btn-ghost" onClick={() => setPendingItems([])}>Cancelar</button>
-              <button className="btn btn-yellow" onClick={confirmImport} disabled={loading}>{loading ? <span className="spin"/> : '✓ Confirmar Entrada no Estoque'}</button>
+              <button className="btn btn-yellow" onClick={confirmImport} disabled={loading}>{loading ? <span className="spin"/> : '✓ Salvar no Dicionário'}</button>
             </div>
           </div>
           <div className="card scr" style={{ padding:0 }}>
@@ -1017,36 +1035,20 @@ function RecebimentoTab({ onSave, toast }) {
                 <tr>
                   <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Produto (Nota)</th>
                   <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>EAN (Nota)</th>
-                  <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Qtd (Nota)</th>
-                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Produto (Cadastro)</th>
-                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>EAN (Cadastro)</th>
-                  <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Qtd</th>
-                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Categoria</th>
-                  <th style={{ padding:'10px 12px', textAlign:'center', fontSize:11, color:'var(--text3)' }}>Validade (Obrigatório)</th>
+                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>Nome para Salvar (Editável)</th>
+                  <th style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:'var(--text3)' }}>EAN para Salvar (Editável)</th>
                 </tr>
               </thead>
               <tbody>
-                {pendingItems.map((item, idx) => (
+                {pendingItems.map((item) => (
                   <tr key={item.id} style={{ borderBottom:'1px solid var(--border)' }}>
                     <td style={{ padding:'10px 12px', fontSize:13, fontWeight:700, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={item.name}>{item.name}</td>
                     <td style={{ padding:'10px 12px', fontSize:11, fontFamily:'monospace', color:'var(--muted)' }}>{item.ean || 'SEM EAN'}</td>
-                    <td style={{ padding:'10px 12px', fontSize:14, fontWeight:800, textAlign:'center' }}>{item.qty}</td>
                     <td style={{ padding:'10px 12px' }}>
                       <input type="text" value={item.name} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, name: e.target.value } : i))} style={{ padding:'6px 8px', borderRadius:6, border:'1px solid var(--border2)', fontSize:12, width:'100%', minWidth:'180px', outline:'none', fontWeight:700, color:'var(--text-primary)', background:'var(--bg-elevated)' }} />
                     </td>
                     <td style={{ padding:'10px 12px' }}>
                       <input type="text" value={item.ean} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, ean: e.target.value.replace(/\D/g, '') } : i))} style={{ padding:'6px 8px', borderRadius:6, border:'1px solid var(--border2)', fontSize:11, fontFamily:'monospace', width:'110px', outline:'none', color:'var(--text-primary)', background:'var(--bg-elevated)' }} placeholder="SEM EAN" />
-                    </td>
-                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
-                      <input type="number" min="1" value={item.qty} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, qty: e.target.value } : i))} style={{ padding:'6px', borderRadius:6, border:'1px solid var(--border2)', fontSize:13, width:'60px', textAlign:'center', outline:'none', fontWeight:800, color:'var(--text-primary)', background:'var(--bg-elevated)' }} />
-                    </td>
-                    <td style={{ padding:'10px 12px' }}>
-                      <select value={item.category} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, category: e.target.value } : i))} style={{ padding:'6px', borderRadius:6, border:'1px solid var(--border2)', fontSize:12, width:'100%', outline:'none', color:'var(--text-primary)', background:'var(--bg-elevated)' }}>
-                        {CATS.map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    </td>
-                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
-                      <input id={`exp-${idx}`} type="date" value={item.expiry} onChange={e => setPendingItems(p => p.map(i => i.id === item.id ? { ...i, expiry: e.target.value } : i))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const n = document.getElementById(`exp-${idx + 1}`); if (n) n.focus(); else confirmImport(); } }} style={{ padding:'8px 10px', borderRadius:8, border: item.expiry ? '1.5px solid var(--border2)' : '2px solid var(--yellow)', background: item.expiry ? 'var(--surface)' : 'var(--yellow-lt)', outline:'none', fontSize:13, width:140 }} />
                     </td>
                   </tr>
                 ))}

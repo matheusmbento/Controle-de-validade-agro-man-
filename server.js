@@ -393,34 +393,7 @@ app.post('/api/estoque/importar-xml', (req, res) => {
   });
 });
 
-// ================= ROTA DE RECEBIMENTO VIA DANFE =================
-app.post('/api/recebimento/danfe', (req, res) => {
-  const { chave } = req.body;
-  if (!chave || chave.length !== 44) {
-    return res.status(400).json({ error: 'Chave DANFE inválida. São necessários 44 dígitos.' });
-  }
 
-  // Simulação de integração com a SEFAZ (retorno dos produtos da nota fiscal)
-  const simulatedProducts = [
-    { ean: '7891010101010', name: 'PRODUTO SIMULADO 1', qty: 10, price: 5.50 },
-    { ean: '7892020202020', name: 'PRODUTO SIMULADO 2', qty: 24, price: 2.30 },
-    { ean: '',              name: 'PRODUTO SEM CÓDIGO', qty: 5,  price: 10.00 }
-  ];
-
-  // Verifica o dicionário interno para manter a padronização de nomes
-  db.all(`SELECT * FROM dict`, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    const dict = {};
-    rows.forEach(r => dict[r.ean] = r.name);
-
-    const enrichedProducts = simulatedProducts.map(p => {
-      if (p.ean && dict[p.ean]) p.name = dict[p.ean];
-      return p;
-    });
-    
-    res.json(enrichedProducts);
-  });
-});
 
 // ================= ROTAS DE DICIONÁRIO =================
 app.get('/api/dict', (req, res) => {
@@ -438,6 +411,26 @@ app.post('/api/dict', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
+});
+
+app.post('/api/dict/batch', async (req, res) => {
+  const items = req.body; // Array de {ean, name}
+  if (!Array.isArray(items)) return res.status(400).json({ error: 'Formato inválido' });
+
+  try {
+    for (const item of items) {
+      if (!item.ean || !item.name) continue;
+      await new Promise((resolve, reject) => {
+        db.run(`INSERT OR REPLACE INTO dict (ean, name) VALUES (?, ?)`, [item.ean, item.name], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    }
+    res.json({ success: true, count: items.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ================= ROTAS DE CONFIGURAÇÃO =================
