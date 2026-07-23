@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+    <NFe>
+        <infNFe Id="NFe35200111111111111111550010000000011234567890" versao="4.00">
+            <det nItem="1">
+                <prod>
+                    <cProd>001</cProd>
+                    <cEAN>7891010101010</cEAN>
+                    <xProd>RACAO PEDIGREE CARNE 1KG (NOME ORIGINAL DA NOTA)</xProd>
+                    <NCM>23091000</NCM>
+                </prod>
+            </det>
+            <det nItem="2">
+                <prod>
+                    <cProd>002</cProd>
+                    <cEAN>7892020202020</cEAN>
+                    <xProd>SHAMPOO ANTIPULGAS PET CLEAN</xProd>
+                    <NCM>33051000</NCM>
+                </prod>
+            </det>
+            <det nItem="3">
+                <prod>
+                    <cProd>003</cProd>
+                    <cEAN>SEM GTIN</cEAN>
+                    <xProd>BRINQUEDO MORDEDOR OSSO DE BORRACHA (ESSE DEVE SER IGNORADO PELO SISTEMA POIS NÃO TEM CÓDIGO DE BARRAS)</xProd>
+                    <NCM>39269090</NCM>
+                </prod>
+            </det>
+            <det nItem="4">
+                <prod>
+                    <cProd>004</cProd>
+                    <cEAN>7893030303030</cEAN>
+                    <xProd>TAPETE HIGIENICO SUPER PREMIUM 30 UNID - ESSE NOME E MUITO LONGO E VOCE PROVAVELMENTE VAI QUERER APAGAR UMA PARTE DELE NA HORA DE SALVAR NO DICIONARIO</xProd>
+                    <NCM>48189090</NCM>
+                </prod>
+            </det>
+        </infNFe>
+    </NFe>
+</nfeProc>

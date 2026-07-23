@@ -9,7 +9,7 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // ================= HELPERS DE DATA E STATUS =================
 const today    = () => { const d = new Date(); d.setHours(0,0,0,0); return d };

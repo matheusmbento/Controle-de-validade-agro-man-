@@ -42,6 +42,6 @@ timeout /t 3 /nobreak > nul
 
 echo.
 echo Abrindo o sistema no navegador...
-start http://localhost:3000/index.html
+start http://localhost:3001/index.html
 
 exit
