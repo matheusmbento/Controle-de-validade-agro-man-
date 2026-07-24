@@ -348,8 +348,10 @@ tr:hover td{background:var(--accent-green-glow)}
   /* KPI Mobile Grid */
   .kpi-bar { display: grid !important; grid-template-columns: 1fr 1fr !important; }
   .kpi { border-bottom: 1px solid var(--border); padding: 10px 15px !important; }
-  .kpi:nth-child(even) { border-right: none !important; }
-  .kpi:nth-child(3), .kpi:nth-child(4) { border-bottom: none !important; }
+  .kpi.yel { grid-column: 1 / -1; }
+    .kpi:nth-child(even):not(.yel) { border-right: 1px solid var(--border) !important; }
+    .kpi:nth-child(odd):not(.yel) { border-right: none !important; }
+    .kpi:nth-child(4), .kpi:nth-child(5) { border-bottom: none !important; }
   /* Libera o scroll nativo do navegador para esconder a barra de endereço */
   html, body, #root { height: auto !important; min-height: 100vh; overflow: visible !important; }
   
@@ -438,6 +440,11 @@ tr:hover td{background:var(--accent-green-glow)}
 @media (min-width: 769px) {
   .mobile-bottom-nav { display: none !important; }
 }
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+  .bdg-transfer { background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); }
 </style>
 </head>
 <body>
@@ -507,7 +514,8 @@ const statusOf = (s, cat) => {
   // Regras originais
   if (d < 30) return 'critical';
   if (d < 60) return 'warning';
-  return 'ok';
+    if (d >= 91 && d <= 120) return 'transfer';
+    return 'ok';
 };
 
 const fmtDate  = s  => { if (!s) return '—'; const [y,m,dd] = s.split('-'); return `${dd}/${m}/${y}` };
@@ -537,10 +545,31 @@ const playError = () => {
   } catch(e) {}
 };
 
+const playDuplicate = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
+    osc1.connect(gain1); gain1.connect(ctx.destination);
+    osc1.type = 'sine';
+    gain1.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    osc1.frequency.setValueAtTime(880, ctx.currentTime);
+    osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.15);
+    const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+    osc2.connect(gain2); gain2.connect(ctx.destination);
+    osc2.type = 'sine';
+    gain2.gain.setValueAtTime(0.08, ctx.currentTime + 0.2);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+    osc2.frequency.setValueAtTime(1100, ctx.currentTime + 0.2);
+    osc2.start(ctx.currentTime + 0.2); osc2.stop(ctx.currentTime + 0.35);
+  } catch(e) {}
+};
+
 const SM = {
   critical : { label:'Crítico',  cls:'bdg-crit' },
   warning  : { label:'Atenção',  cls:'bdg-warn' },
-  ok       : { label:'Saudável', cls:'bdg-ok'   },
+  ok       : { label:'Saud\u00E1vel', cls:'bdg-ok'   },
+  transfer : { label:'REMANEJAR', cls:'bdg-transfer' },
 };
 
 /* ══════════════════════════════════════════════════════
@@ -643,7 +672,66 @@ function KpiBar({ stock, onFilterClick }) {
       <div className="kpi yel" style={{cursor:'pointer'}} onClick={() => onFilterClick('all')}><span className="kpi-icon">🏪</span><div><div className="kpi-num">{total}</div><div className="kpi-lbl">Produtos</div></div></div>
       <div className="kpi crit" style={{cursor:'pointer'}} onClick={() => onFilterClick('critical')}><span className="kpi-icon">🚨</span><div><div className="kpi-num">{crit}</div><div className="kpi-lbl">Crítico</div></div></div>
       <div className="kpi warn" style={{cursor:'pointer'}} onClick={() => onFilterClick('warning')}><span className="kpi-icon">⚠️</span><div><div className="kpi-num">{warn}</div><div className="kpi-lbl">Atenção</div></div></div>
-      <div className="kpi ok" style={{cursor:'pointer'}} onClick={() => onFilterClick('ok')}><span className="kpi-icon">✅</span><div><div className="kpi-num" style={{color:'#86efac'}}>{ok}</div><div className="kpi-lbl">Saudável</div></div></div>
+      <div className="kpi ok" style={{cursor:'pointer'}} onClick={() => onFilterClick('ok')}><span className="kpi-icon">✅</span><div><div className="kpi-num" style={{color:'#86efac'}}>{ok}</div><div className="kpi-lbl">Saudável</div></div>
+      {duplicateItem && (
+        <div className="modal-bg" style={{ zIndex: 600 }} onClick={() => setDuplicateItem(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, width: '100%', maxWidth: '100%',
+            borderRadius: '20px 20px 0 0', padding: '28px 24px', paddingBottom: 'calc(28px + env(safe-area-inset-bottom))',
+            animation: 'slideUp 0.3s ease-out'
+          }}>
+            <div style={{ width: '40px', height: '4px', background: 'var(--border)', borderRadius: '2px', margin: '0 auto 16px' }}></div>
+            <div className="modal-title" style={{ justifyContent: 'center', fontSize: '16px' }}>⚠️ Produto já cadastrado!</div>
+            
+            <div style={{ background: 'var(--bg-elevated)', borderRadius: '12px', padding: '16px', marginBottom: '20px', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px', lineHeight: 1.3 }}>
+                {duplicateItem.name}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                {duplicateItem.category || 'Sem categoria'}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                  {duplicateItem.qty} unidades
+                </div>
+                <div style={{
+                  fontSize: '0.85rem', fontWeight: 700, padding: '4px 14px', borderRadius: '8px',
+                  border: `2px solid ${statusOf(duplicateItem.expiry, duplicateItem.category) === 'critical' ? 'var(--status-critical)' : statusOf(duplicateItem.expiry, duplicateItem.category) === 'warning' ? 'var(--status-warning)' : '#86efac'}`,
+                  color: statusOf(duplicateItem.expiry, duplicateItem.category) === 'critical' ? 'var(--status-critical)' : statusOf(duplicateItem.expiry, duplicateItem.category) === 'warning' ? 'var(--status-warning)' : '#86efac'
+                }}>
+                  {duplicateItem.expiry ? duplicateItem.expiry.split('-').reverse().join('/') : '-'}
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button className="btn btn-yellow btn-full" style={{ height: '44px', fontSize: '0.95rem', fontWeight: 700 }} onClick={() => {
+                setName(duplicateItem.name);
+                setCat(duplicateItem.category || CATS[0]);
+                setExp(duplicateItem.expiry || '');
+                setQty('');
+                setDuplicateItem(null);
+                setTimeout(() => qtyRef.current?.focus(), 200);
+                toast('Preencha a quantidade a somar.', 'info');
+              }}>🔄 Somar Quantidade</button>
+              <button className="btn btn-ghost btn-full" style={{ height: '44px', fontSize: '0.95rem', fontWeight: 700, border: '1px solid var(--accent-green)', color: 'var(--accent-green)' }} onClick={() => {
+                setName(duplicateItem.name);
+                setCat(duplicateItem.category || CATS[0]);
+                setQty('');
+                setExp('');
+                setDuplicateItem(null);
+                setTimeout(() => qtyRef.current?.focus(), 200);
+                toast('Preencha quantidade e validade do novo lote.', 'info');
+              }}>📦 Cadastrar Novo Lote</button>
+              <button className="btn btn-ghost btn-full" style={{ height: '40px', fontSize: '0.85rem', color: 'var(--text-muted)' }} onClick={() => {
+                setDuplicateItem(null);
+                setEan(''); setName(''); setQty(''); setExp('');
+              }}>❌ Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+</div>
     </div>
   );
 }
@@ -694,6 +782,7 @@ function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, conf
   const [hint, setHint] = useState(null);
   const [loading, setLoad] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+    const [duplicateItem, setDuplicateItem] = useState(null);
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   
   const myScans = useMemo(() => {
@@ -768,6 +857,8 @@ function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, conf
     if (dict[code]) {
       setName(dict[code]);
       setHint({ type:'ok', msg:'✅ Encontrado na memória local (instantâneo!)' });
+        const existingLocal = stock.find(s => s.ean === code);
+        if (existingLocal) { playDuplicate(); setDuplicateItem(existingLocal); }
       setLoad(false);
       setTimeout(() => catRef.current?.focus(), 180);
       return;
@@ -778,10 +869,14 @@ function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, conf
     if (resultName) {
       setName(resultName);
       setHint({ type:'ok', msg:'✅ Produto encontrado! Edite o nome se necessário.' });
+        const existingApi = stock.find(s => s.ean === code);
+        if (existingApi) { playDuplicate(); setDuplicateItem(existingApi); }
       setTimeout(() => catRef.current?.focus(), 180);
     } else {
       setName('');
       setHint({ type:'warn', msg:'⚠ Não encontrado nas bases — digite o nome manualmente.' });
+        const existingNF = stock.find(s => s.ean === code);
+        if (existingNF) { setName(existingNF.name); playDuplicate(); setDuplicateItem(existingNF); setHint({ type:'ok', msg:'✅ Produto já existe no estoque!' }); }
         playError();
       setTimeout(() => nameRef.current?.focus(), 150);
     }
