@@ -1047,7 +1047,7 @@ function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, conf
         <div className="modal-bg" style={{ zIndex: 600 }} onClick={() => setDuplicateItem(null)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, width: '100%', maxWidth: '100%',
-            borderRadius: '20px 20px 0 0', padding: '28px 24px', paddingBottom: 'calc(28px + env(safe-area-inset-bottom))',
+            borderRadius: '20px 20px 0 0', padding: '28px 24px', paddingBottom: isMobile ? 'calc(90px + env(safe-area-inset-bottom))' : 'calc(28px + env(safe-area-inset-bottom))',
             animation: 'slideUp 0.3s ease-out'
           }}>
             <div style={{ width: '40px', height: '4px', background: 'var(--border)', borderRadius: '2px', margin: '0 auto 16px' }}></div>
