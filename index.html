@@ -456,6 +456,48 @@ tr:hover td{background:var(--accent-green-glow)}
     line-height: 1.2 !important;
     word-break: break-word !important;
   }
+
+  /* ── PRINT STYLES ── */
+  .print-only { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    .print-only, .print-only * { visibility: visible; }
+    .print-only { 
+      display: block !important; 
+      position: absolute; 
+      left: 0; top: 0; width: 100%; 
+      padding: 20px; background: white; color: black; z-index: 999999; 
+    }
+    .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-family: sans-serif; color: #000; }
+    .print-table th, .print-table td { border: 1px solid #000; padding: 10px; text-align: left; font-size: 14px; }
+    .print-table th { background-color: #f0f0f0; font-weight: bold; }
+    .print-header { text-align: center; margin-bottom: 20px; color: #000; font-family: sans-serif; }
+    .print-header h1 { font-size: 24px; margin: 0; }
+    .print-header p { font-size: 12px; color: #333; margin: 4px 0 0 0; }
+    .print-checkbox { width: 18px; height: 18px; border: 1.5px solid #000; display: inline-block; margin: 0 auto; }
+    
+    /* Hide some elements inside print-area if needed, or explicitly show */
+  }
+
+  /* ── PRINT STYLES ── */
+  .print-only { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    .print-only, .print-only * { visibility: visible; }
+    .print-only { 
+      display: block !important; 
+      position: absolute; 
+      left: 0; top: 0; width: 100%; 
+      padding: 20px; background: white; color: black; z-index: 999999; 
+    }
+    .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-family: sans-serif; color: #000; }
+    .print-table th, .print-table td { border: 1px solid #000; padding: 10px; text-align: left; font-size: 14px; }
+    .print-table th { background-color: #f0f0f0; font-weight: bold; }
+    .print-header { text-align: center; margin-bottom: 20px; color: #000; font-family: sans-serif; }
+    .print-header h1 { font-size: 24px; margin: 0; }
+    .print-header p { font-size: 12px; color: #333; margin: 4px 0 0 0; }
+    .print-checkbox { width: 18px; height: 18px; border: 1.5px solid #000; display: inline-block; margin: 0 auto; }
+  }
 </style>
 </head>
 <body>
@@ -1596,7 +1638,7 @@ function DashTab({ stock, config, toast, setStock, currentUser }) {
             title="Baixar lista em formato Excel"
             style={{ padding: '4px 8px', fontSize: '0.65rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}
           >
-            📥 Excel
+            🖨️ Imprimir
           </button>
         </div>
 
@@ -1894,7 +1936,46 @@ function DashTab({ stock, config, toast, setStock, currentUser }) {
         </div>
       )}
 
-    </div>
+    
+        {/* PRINT AREA (Hidden on screen, visible on print) */}
+        <div className="print-only">
+          <div className="print-header">
+            <h1>Relatório de Oportunidades e FIFO</h1>
+            <p>Agro Mané - Impresso em {new Date().toLocaleString('pt-BR')}</p>
+          </div>
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th style={{width: '40px', textAlign: 'center'}}>✓</th>
+                <th>Produto</th>
+                <th>Código (EAN)</th>
+                <th>Validade</th>
+                <th>Qtd</th>
+                <th>Ação / Desconto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {elegiveis.map(item => {
+                const d = diffDays(item.expiry);
+                let descPct = 0;
+                if (d <= 30) descPct = 25;
+                else if (d <= 60) descPct = 20;
+                else if (d <= 90) descPct = 15;
+                return (
+                  <tr key={item.id}>
+                    <td style={{textAlign: 'center'}}><div className="print-checkbox"></div></td>
+                    <td><strong>{item.name}</strong></td>
+                    <td>{item.id}</td>
+                    <td>{fmtDate(item.expiry)}</td>
+                    <td>{item.qty} un</td>
+                    <td style={{fontWeight: 'bold', fontSize: '16px'}}>-{descPct}% OFF</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+</div>
   );
 }
 
