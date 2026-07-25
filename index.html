@@ -1449,7 +1449,7 @@ function InventoryTab({ stock, setStock, toast }) {
             <tbody>
               {healthyItems.map((item) => (
                 <tr key={item.id} style={{ borderBottom:'1px solid var(--border)' }}>
-                  <td style={{ padding:'10px 12px', fontSize:13, fontWeight:700, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>{item.name}</td>
+                  <td style={{ padding:'10px 12px', fontSize:13, fontWeight:700, maxWidth: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal' }} title={item.name}>{item.name}</td>
                   <td style={{ padding:'10px 12px' }}><span className="cat-tag">{item.category||CATS[0]}</span></td>
                   <td style={{ padding:'10px 12px', fontSize:13, fontWeight:600, textAlign:'center', color: 'var(--green)' }}>{fmtDate(item.expiry)}</td>
                   <td style={{ padding:'10px 12px', fontSize:14, fontWeight:800, textAlign:'center' }}>{item.qty}</td>
