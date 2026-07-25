@@ -177,8 +177,6 @@ async function checkBootAlert() {
 }
 
 console.log('✅ Bot do Telegram rodando protegido em um processo paralelo!');
-checkBootBackup();
-checkBootAlert();
 
 cron.schedule('55 18 * * *', performBackup);
 cron.schedule('0 9 * * *', () => sendCriticalStockAlert(false));
