@@ -1704,7 +1704,7 @@ function DashTab({ stock, config, toast, setStock, currentUser }) {
               
               <div className="top10-row-primary" style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                 <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', minWidth: '20px', fontWeight: 500 }}>#{i+1}</span>
-                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>{item.name}</span>
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', flex: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal', lineHeight: '1.2' }} title={item.name}>{item.name}</span>
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, whiteSpace: 'nowrap', color: col }}>{label}</span>
               </div>
               
