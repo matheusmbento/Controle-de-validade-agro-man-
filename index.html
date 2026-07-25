@@ -445,6 +445,17 @@ tr:hover td{background:var(--accent-green-glow)}
   to { transform: translateY(0); opacity: 1; }
 }
   .bdg-transfer { background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); }
+
+  .text-2-lines {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+    word-break: break-word !important;
+  }
 </style>
 </head>
 <body>
@@ -1449,7 +1460,7 @@ function InventoryTab({ stock, setStock, toast }) {
             <tbody>
               {healthyItems.map((item) => (
                 <tr key={item.id} style={{ borderBottom:'1px solid var(--border)' }}>
-                  <td style={{ padding:'10px 12px', fontSize:13, fontWeight:700, maxWidth: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal' }} title={item.name}>{item.name}</td>
+                  <td className="text-2-lines" style={{ padding:'10px 12px', fontSize:13, fontWeight:700, maxWidth: 300, color: 'var(--text-primary)' }} title={item.name}>{item.name}</td>
                   <td style={{ padding:'10px 12px' }}><span className="cat-tag">{item.category||CATS[0]}</span></td>
                   <td style={{ padding:'10px 12px', fontSize:13, fontWeight:600, textAlign:'center', color: 'var(--green)' }}>{fmtDate(item.expiry)}</td>
                   <td style={{ padding:'10px 12px', fontSize:14, fontWeight:800, textAlign:'center' }}>{item.qty}</td>
@@ -1704,7 +1715,7 @@ function DashTab({ stock, config, toast, setStock, currentUser }) {
               
               <div className="top10-row-primary" style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                 <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', minWidth: '20px', fontWeight: 500 }}>#{i+1}</span>
-                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', flex: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal', lineHeight: '1.2' }} title={item.name}>{item.name}</span>
+                <span className="text-2-lines" style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', flex: 1 }} title={item.name}>{item.name}</span>
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, whiteSpace: 'nowrap', color: col }}>{label}</span>
               </div>
               
