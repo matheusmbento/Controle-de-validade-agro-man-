@@ -503,20 +503,22 @@ const diffDays = s  => { const p = parseDt(s); if (!p) return 9999; return Math.
 
 // Novo critério: Adaptado por categoria
 const statusOf = (s, cat) => {
-  const d = diffDays(s);
-  
-  if (cat === 'Petiscos') {
-    if (d <= 15) return 'critical';
-    if (d <= 30) return 'warning';
-    return 'ok';
-  }
-  
-  // Regras originais
-  if (d < 30) return 'critical';
-  if (d < 60) return 'warning';
+    const d = diffDays(s);
+    
+    // Janela de transferência — vale para TODAS as categorias
     if (d >= 91 && d <= 120) return 'transfer';
+    
+    if (cat === 'Petiscos') {
+      if (d <= 15) return 'critical';
+      if (d <= 30) return 'warning';
+      return 'ok';
+    }
+    
+    // Regras originais
+    if (d < 30) return 'critical';
+    if (d < 60) return 'warning';
     return 'ok';
-};
+  };
 
 const fmtDate  = s  => { if (!s) return '—'; const [y,m,dd] = s.split('-'); return `${dd}/${m}/${y}` };
 const uid      = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -568,7 +570,7 @@ const playDuplicate = () => {
 const SM = {
   critical : { label:'Crítico',  cls:'bdg-crit' },
   warning  : { label:'Atenção',  cls:'bdg-warn' },
-  ok       : { label:'Saud\u00E1vel', cls:'bdg-ok'   },
+  ok       : { label:'Saudável', cls:'bdg-ok'   },
   transfer : { label:'REMANEJAR', cls:'bdg-transfer' },
 };
 
@@ -663,21 +665,21 @@ function Header({ onLogout, onShutdown, onConfig, currentUser, userKPI, gameMeta
 
 /* KPI Bar */
 function KpiBar({ stock, onFilterClick }) {
-  const total = stock.length;
-  const crit  = stock.filter(i => statusOf(i.expiry, i.category) === 'critical').length;
-  const warn  = stock.filter(i => statusOf(i.expiry, i.category) === 'warning').length;
-  const ok    = stock.filter(i => statusOf(i.expiry, i.category) === 'ok').length;
-  return (
-    <div className="kpi-bar">
-      <div className="kpi yel" style={{cursor:'pointer'}} onClick={() => onFilterClick('all')}><span className="kpi-icon">🏪</span><div><div className="kpi-num">{total}</div><div className="kpi-lbl">Produtos</div></div></div>
-      <div className="kpi crit" style={{cursor:'pointer'}} onClick={() => onFilterClick('critical')}><span className="kpi-icon">🚨</span><div><div className="kpi-num">{crit}</div><div className="kpi-lbl">Crítico</div></div></div>
-      <div className="kpi warn" style={{cursor:'pointer'}} onClick={() => onFilterClick('warning')}><span className="kpi-icon">⚠️</span><div><div className="kpi-num">{warn}</div><div className="kpi-lbl">Atenção</div></div></div>
-      <div className="kpi ok" style={{cursor:'pointer'}} onClick={() => onFilterClick('ok')}><span className="kpi-icon">✅</span><div><div className="kpi-num" style={{color:'#86efac'}}>{ok}</div><div className="kpi-lbl">Saudável</div></div>
-      
-</div>
-    </div>
-  );
-}
+    const total = stock.length;
+    const crit  = stock.filter(i => statusOf(i.expiry, i.category) === 'critical').length;
+    const warn  = stock.filter(i => statusOf(i.expiry, i.category) === 'warning').length;
+    const ok    = stock.filter(i => statusOf(i.expiry, i.category) === 'ok').length;
+    const trans = stock.filter(i => statusOf(i.expiry, i.category) === 'transfer').length;
+    return (
+      <div className="kpi-bar">
+        <div className="kpi yel" style={{cursor:'pointer'}} onClick={() => onFilterClick('all')}><span className="kpi-icon">🏪</span><div><div className="kpi-num">{total}</div><div className="kpi-lbl">Produtos</div></div></div>
+        <div className="kpi crit" style={{cursor:'pointer'}} onClick={() => onFilterClick('critical')}><span className="kpi-icon">🚨</span><div><div className="kpi-num">{crit}</div><div className="kpi-lbl">Crítico</div></div></div>
+        <div className="kpi warn" style={{cursor:'pointer'}} onClick={() => onFilterClick('warning')}><span className="kpi-icon">⚠️</span><div><div className="kpi-num">{warn}</div><div className="kpi-lbl">Atenção</div></div></div>
+        <div className="kpi ok" style={{cursor:'pointer'}} onClick={() => onFilterClick('ok')}><span className="kpi-icon">✅</span><div><div className="kpi-num" style={{color:'#86efac'}}>{ok}</div><div className="kpi-lbl">Saudável</div></div></div>
+        <div className="kpi transfer" style={{cursor:'pointer'}} onClick={() => onFilterClick('transfer')}><span className="kpi-icon">🚚</span><div><div className="kpi-num" style={{color:'#3b82f6'}}>{trans}</div><div className="kpi-lbl">Remanejar</div></div></div>
+      </div>
+    );
+  }
 
 /* Tabs */
 function Tabs({ active, onChange }) {
@@ -823,7 +825,7 @@ function CaptureTab({ onSave, toast, stock, currentUser, gameMeta, gameMsg, conf
         playError();
       setTimeout(() => nameRef.current?.focus(), 150);
     }
-  }, []);
+  }, [stock]);
 
   const handleEanKey  = e => { if (e.key === 'Enter' && ean.trim()) lookup(ean.trim()) };
   const handleNameKey = e => { if (e.key === 'Enter' && name.trim()) catRef.current?.focus() };
