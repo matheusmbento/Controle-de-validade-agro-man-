@@ -490,7 +490,7 @@ const db = {
   updateItem: async (item) => fetch(`${API_URL}/stock/${item.id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item) }),
   deleteItem: async (id) => fetch(`${API_URL}/stock/${id}`, { method:'DELETE' }),
   baixarItem: async (id, tipo_baixa, quantidade, usuario) => fetch(`${API_URL}/estoque/baixar`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, tipo_baixa, quantidade, usuario}) }),
-  ajusteSaudavel: async (id, qtd_fisica, qtd_vendida, usuario) => fetch(`${API_URL}/estoque/ajuste-saudavel`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, qtd_fisica, qtd_vendida, usuario}) }),
+  ajusteMonitorar: async (id, qtd_fisica, qtd_vendida, usuario) => fetch(`${API_URL}/estoque/ajuste-saudavel`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, qtd_fisica, qtd_vendida, usuario}) }),
   loadBaixas: async () => { try { const r = await fetch(`${API_URL}/relatorios/baixas`); return await r.json() } catch { return [] } },
   loadPerdas: async (start, end) => { try { const q = start && end ? `?start=${start}&end=${end}` : ''; const r = await fetch(`${API_URL}/relatorios/perdas-detalhadas${q}`); return await r.json() } catch { return [] } },
   loadGanhos: async (start, end) => { try { const q = start && end ? `?start=${start}&end=${end}` : ''; const r = await fetch(`${API_URL}/relatorios/ganhos-detalhados${q}`); return await r.json() } catch { return [] } },
@@ -515,19 +515,9 @@ const diffDays = s  => { const p = parseDt(s); if (!p) return 9999; return Math.
 // Novo critério: Adaptado por categoria
 const statusOf = (s, cat) => {
     const d = diffDays(s);
-    
-    // Janela de transferência — vale para TODAS as categorias
-    if (d >= 91 && d <= 120) return 'transfer';
-    
-    if (cat === 'Petiscos') {
-      if (d <= 15) return 'critical';
-      if (d <= 30) return 'warning';
-      return 'ok';
-    }
-    
-    // Regras originais
-    if (d < 30) return 'critical';
-    if (d < 60) return 'warning';
+    if (d <= 30) return 'critical';
+    if (d <= 90) return 'warning';
+    if (d <= 120) return 'transfer';
     return 'ok';
   };
 
@@ -581,7 +571,7 @@ const playDuplicate = () => {
 const SM = {
   critical : { label:'Crítico',  cls:'bdg-crit' },
   warning  : { label:'Atenção',  cls:'bdg-warn' },
-  ok       : { label:'Saudável', cls:'bdg-ok'   },
+  ok       : { label:'MONITORAR', cls:'bdg-ok'   },
   transfer : { label:'REMANEJAR', cls:'bdg-transfer' },
 };
 
@@ -686,7 +676,7 @@ function KpiBar({ stock, onFilterClick }) {
         <div className="kpi yel" style={{cursor:'pointer'}} onClick={() => onFilterClick('all')}><span className="kpi-icon">🏪</span><div><div className="kpi-num">{total}</div><div className="kpi-lbl">Produtos</div></div></div>
         <div className="kpi crit" style={{cursor:'pointer'}} onClick={() => onFilterClick('critical')}><span className="kpi-icon">🚨</span><div><div className="kpi-num">{crit}</div><div className="kpi-lbl">Crítico</div></div></div>
         <div className="kpi warn" style={{cursor:'pointer'}} onClick={() => onFilterClick('warning')}><span className="kpi-icon">⚠️</span><div><div className="kpi-num">{warn}</div><div className="kpi-lbl">Atenção</div></div></div>
-        <div className="kpi ok" style={{cursor:'pointer'}} onClick={() => onFilterClick('ok')}><span className="kpi-icon">✅</span><div><div className="kpi-num" style={{color:'#86efac'}}>{ok}</div><div className="kpi-lbl">Saudável</div></div></div>
+        <div className="kpi ok" style={{cursor:'pointer'}} onClick={() => onFilterClick('ok')}><span className="kpi-icon">✅</span><div><div className="kpi-num" style={{color:'#86efac'}}>{ok}</div><div className="kpi-lbl">Monitorar</div></div></div>
         <div className="kpi transfer" style={{cursor:'pointer'}} onClick={() => onFilterClick('transfer')}><span className="kpi-icon">🚚</span><div><div className="kpi-num" style={{color:'#3b82f6'}}>{trans}</div><div className="kpi-lbl">Remanejar</div></div></div>
       </div>
     );
@@ -1328,7 +1318,7 @@ function StockTab({ stock, setStock, toast, config, fSt, setFSt, currentUser }) 
             </button>
           ))}
           <div style={{ borderLeft: '1px solid var(--border)', height: '20px', margin: '0 8px' }}></div>
-          {[{id:'all',l:'Todos'},{id:'critical',l:'Crítico'},{id:'warning',l:'Atenção'},{id:'ok',l:'Saudável'}].map(f => {
+          {[{id:'all',l:'Todos'},{id:'critical',l:'Crítico'},{id:'warning',l:'Atenção'},{id:'ok',l:'Monitorar'}].map(f => {
             const cls = fSt === f.id ? (f.id === 'critical' ? ' active-critical' : f.id === 'warning' ? ' active-warning' : ' active') : '';
             return <button key={f.id} className={`fbtn${cls}`} onClick={() => setFSt(f.id)}>{f.l}</button>;
           })}
@@ -1422,7 +1412,7 @@ function InventoryTab({ stock, setStock, toast }) {
     if (soldQty < 0) { toast('Para aumentar o estoque, use a aba Captura/Recebimento.', 'error'); return; }
     if (soldQty === 0) { toast('A quantidade informada é igual à do sistema.', 'warn'); return; }
 
-    await db.ajusteSaudavel(item.id, physicalQty, soldQty, currentUser?.nome);
+    await db.ajusteMonitorar(item.id, physicalQty, soldQty, currentUser?.nome);
     const u = stock.map(i => i.id === item.id ? { ...i, qty: physicalQty } : i).filter(i => i.qty > 0);
     setStock(u);
     
@@ -1523,7 +1513,7 @@ function DashTab({ stock, config, toast, setStock, currentUser }) {
   const elegiveis = useMemo(() => {
     return stock.filter(i => {
       const d = diffDays(i.expiry);
-      return d > 0 && d <= 60;
+      return d > 0 && d <= 90;
     }).sort((a, b) => diffDays(a.expiry) - diffDays(b.expiry));
   }, [stock]);
 
@@ -1631,14 +1621,14 @@ function DashTab({ stock, config, toast, setStock, currentUser }) {
             elegiveis.map(item => {
               const d = diffDays(item.expiry);
               const isTrinta = d <= 30;
-              const descPct = isTrinta ? 20 : 15;
+              let descPct = 0; if (d <= 30) descPct = 25; else if (d <= 60) descPct = 20; else if (d <= 90) descPct = 15;
               const descText = `-${descPct}%`;
               
               return (
                 <div key={item.id} className="oportunidade-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px', transition: 'border-color 0.15s, opacity 0.3s' }} onMouseOver={e=>e.currentTarget.style.borderColor='rgba(141,198,63,0.3)'} onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}>
                   
                   <div style={{ minWidth: '56px' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isTrinta ? '#FB8C00' : 'var(--text-secondary)', display: 'block' }}>{d} dias</span>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: (d <= 30 ? 'var(--status-critical)' : (d <= 60 ? '#FB8C00' : 'var(--text-secondary)')), display: 'block' }}>{d} dias</span>
                     <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', background: 'rgba(141,198,63,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(141,198,63,0.2)', display: 'inline-block', marginTop: '2px' }}>{descText}</span>
                   </div>
 
@@ -1782,7 +1772,7 @@ function DashTab({ stock, config, toast, setStock, currentUser }) {
                 )}
                 {v.ok > 0 && (
                   <span className="status-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap', background: 'rgba(141,198,63,0.08)', border: '1px solid rgba(141,198,63,0.2)', color: 'var(--accent-green)' }}>
-                    ● Saudável {v.ok}
+                    ● Monitorar {v.ok}
                   </span>
                 )}
               </div>
