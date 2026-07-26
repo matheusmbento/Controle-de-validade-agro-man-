@@ -348,7 +348,7 @@ tr:hover td{background:var(--accent-green-glow)}
   /* KPI Mobile Grid */
   .kpi-bar { display: grid !important; grid-template-columns: 1fr 1fr !important; }
   .kpi { border-bottom: 1px solid var(--border); padding: 10px 15px !important; }
-  .kpi.yel { grid-column: 1 / -1; }
+  .kpi.yel { grid-column: 1 / -1; justify-content: center !important; }
     .kpi:nth-child(even):not(.yel) { border-right: 1px solid var(--border) !important; }
     .kpi:nth-child(odd):not(.yel) { border-right: none !important; }
     .kpi:nth-child(4), .kpi:nth-child(5) { border-bottom: none !important; }
@@ -423,7 +423,7 @@ tr:hover td{background:var(--accent-green-glow)}
 
   .app { padding-bottom: 80px !important; } /* Space for bottom nav */
 
-  /* Tabela de Estoque em Cards no Mobile (Redesign Premium) */
+  /* Tabela de Estoque em Cards no Mobile (Redesign Premium - GRID) */
     .stock-table, .stock-table thead, .stock-table tbody, .stock-table th, .stock-table td, .stock-table tr { display: block; }
     .stock-table thead tr { display: none !important; }
     
@@ -431,59 +431,69 @@ tr:hover td{background:var(--accent-green-glow)}
       background: var(--bg-surface); margin-bottom: 12px; border: 1px solid var(--border);
       border-top: 3px solid var(--status-col, var(--border)) !important;
       border-radius: 12px; padding: 12px 14px; position: relative; touch-action: pan-y;
-      display: flex; flex-wrap: wrap;
+      
+      display: grid !important;
+      grid-template-columns: max-content max-content 1fr;
+      grid-template-areas: 
+        "prod prod prod"
+        "cat ean ean"
+        "status date days"
+        "actions actions actions";
+      row-gap: 6px;
+      column-gap: 6px;
+      align-items: center;
     }
     
-    .stock-table td { padding: 0 !important; border: none !important; text-align: left !important; }
+    .stock-table td { padding: 0 !important; border: none !important; text-align: left !important; margin: 0 !important; }
     
     /* 1. Produto Protagonista */
     .stock-table td:nth-of-type(1) { 
-      order: 1; width: 100%; margin-bottom: 6px; padding-right: 40px !important;
+      grid-area: prod; padding-right: 40px !important; margin-bottom: 4px;
       font-size: 14px !important; font-weight: 800 !important; color: var(--text-primary) !important;
       white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
     }
     
     /* 2. Categoria */
-    .stock-table td:nth-of-type(2) { order: 2; width: auto; margin-right: 6px; margin-bottom: 8px; }
-    .stock-table td:nth-of-type(2) .cat-tag { font-size: 10px !important; padding: 2px 6px !important; }
+    .stock-table td:nth-of-type(2) { grid-area: cat; }
+    .stock-table td:nth-of-type(2) .cat-tag { font-size: 10px !important; padding: 2px 6px !important; margin: 0 !important; display: inline-block; }
     
     /* 3. EAN formatado e menor */
     .stock-table td:nth-of-type(3) { 
-      order: 3; flex: 1 1 50%; align-self: center; margin-bottom: 12px;
+      grid-area: ean;
       font-size: 10px !important; font-family: monospace !important; color: var(--text-muted) !important; font-weight: 500 !important; letter-spacing: 0.5px;
     }
     
     /* 4. Qtd Badge (Canto direito) */
     .stock-table td:nth-of-type(4) { 
-      order: 4; position: absolute; right: 14px; top: 12px;
+      position: absolute; right: 14px; top: 12px;
       background: var(--bg-elevated); padding: 2px 6px !important; border-radius: 6px; border: 1px solid var(--border);
       font-size: 11px !important; color: var(--text-secondary) !important; font-weight: 800 !important;
     }
     .stock-table td:nth-of-type(4)::after { content: ' un'; font-size: 9px; font-weight: normal; color: var(--text-muted); }
     
     /* 7. Status (Vem primeiro na Linha Mágica) */
-    .stock-table td:nth-of-type(7) { order: 5; width: auto; margin-right: 4px; }
-    .stock-table td:nth-of-type(7) .badge { font-size: 9px !important; padding: 2px 6px !important; }
+    .stock-table td:nth-of-type(7) { grid-area: status; }
+    .stock-table td:nth-of-type(7) .badge { font-size: 9px !important; padding: 2px 6px !important; margin: 0 !important; display: inline-block; }
     
     /* 5. Data na Linha Mágica */
     .stock-table td:nth-of-type(5) { 
-      order: 6; width: auto; align-self: center;
+      grid-area: date;
       font-size: 11px !important; color: var(--text-secondary) !important; font-weight: 600 !important;
     }
-    .stock-table td:nth-of-type(5)::before { content: ' • '; margin: 0 4px; color: var(--text-muted); font-weight: normal; }
+    .stock-table td:nth-of-type(5)::before { content: ' • '; margin-right: 4px; color: var(--text-muted); font-weight: normal; }
     
     /* 6. Dias na Linha Mágica */
     .stock-table td:nth-of-type(6) { 
-      order: 7; width: auto; align-self: center;
+      grid-area: days;
       font-size: 11px !important;
     }
-    .stock-table td:nth-of-type(6)::before { content: ' • '; margin: 0 4px; color: var(--text-muted); font-weight: normal; }
+    .stock-table td:nth-of-type(6)::before { content: ' • '; margin-right: 4px; color: var(--text-muted); font-weight: normal; }
     
     /* 8. Botões e Ações */
     .stock-table td:nth-of-type(8) { 
-      order: 8; width: 100%; margin-top: 12px; padding-top: 12px !important; border-top: 1px dashed var(--border) !important; 
+      grid-area: actions; margin-top: 6px; padding-top: 12px !important; border-top: 1px dashed var(--border) !important; 
     }
-    .stock-table td:nth-of-type(8) > div { justify-content: flex-start !important; width: 100%; gap: 10px; }
+    .stock-table td:nth-of-type(8) > div { justify-content: flex-start !important; width: 100%; gap: 10px; display: flex; }
     
     /* Editar Ghost */
     .stock-table td:nth-of-type(8) .btn-edit { 
