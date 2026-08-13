@@ -1369,6 +1369,8 @@ function StockTab({ stock, setStock, toast, config, fSt, setFSt, currentUser }) 
   const [baixaQtd, setBaixaQtd] = useState('');
   const [search,  setSearch]  = useState('');
   const [fCat,    setFCat]    = useState('all');
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportOpts, setExportOpts] = useState({ critical: true, warning: true, transfer: false, ok: false });
 
   const filtered = useMemo(() => {
     return stock
@@ -1404,19 +1406,52 @@ function StockTab({ stock, setStock, toast, config, fSt, setFSt, currentUser }) 
     toast('Produto atualizado!');
   };
 
-  const sendProductionAlert = () => {
+  const handleSendExport = () => {
     if (!config || !config.telegram_token) { toast('Configure o Telegram nos Ajustes!', 'error'); return; }
-    const mp = stock.filter(i => statusOf(i.expiry, i.category) === 'critical' || statusOf(i.expiry, i.category) === 'warning');
-    if (mp.length === 0) { toast('Nenhum item em risco!', 'ok'); return; }
     
-    let msg = `*ALERTA DE ESTOQUE AGRO MANÉ* 🚨\n\nPriorize a venda dos seguintes itens para evitar perdas:\n\n`;
+    const mp = stock.filter(i => {
+      const st = statusOf(i.expiry, i.category);
+      return exportOpts[st];
+    });
+
+    if (mp.length === 0) { toast('Nenhum item encontrado com os filtros selecionados!', 'warn'); return; }
+    
+    let msg = `*RELATÓRIO DE ESTOQUE AGRO MANÉ* 📊\n\nResumo dos itens exportados:\n\n`;
     mp.forEach(i => {
-      const st = statusOf(i.expiry, i.category) === 'critical' ? '🚨' : '⚠️';
-      msg += `${st} *${i.name}* - Vence em ${diffDays(i.expiry)} dias (${i.qty} un)\n`;
+      const st = statusOf(i.expiry, i.category);
+      const ic = st === 'critical' ? '🚨' : st === 'warning' ? '⚠️' : st === 'transfer' ? '🚚' : '✅';
+      msg += `${ic} *${i.name}* - Vence em ${diffDays(i.expiry)} dias (${i.qty} un)\n`;
     });
     msg += `\n_Gerado automaticamente pelo Sistema Agro Mané_`;
     db.sendMessage(msg);
-    toast('Alerta enviado via Telegram!');
+    toast('Relatório enviado via Telegram!');
+    setExportModalOpen(false);
+  };
+
+  const handleDownloadCSV = () => {
+    const mp = stock.filter(i => {
+      const st = statusOf(i.expiry, i.category);
+      return exportOpts[st];
+    });
+
+    if (mp.length === 0) { toast('Nenhum item encontrado com os filtros selecionados!', 'warn'); return; }
+    
+    const csvRows = ['Produto;Categoria;EAN;Qtd;Validade;Dias para Vencer;Status'];
+    mp.forEach(i => {
+      const st = statusOf(i.expiry, i.category);
+      csvRows.push(`${i.name};${i.category||'Sem Categoria'};${i.ean};${i.qty};${fmtDate(i.expiry)};${diffDays(i.expiry)};${SM[st]?.label||st}`);
+    });
+    
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.setAttribute('download', `Relatorio_Estoque_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('Download da planilha iniciado!');
+    setExportModalOpen(false);
   };
 
   return (
@@ -1434,7 +1469,7 @@ function StockTab({ stock, setStock, toast, config, fSt, setFSt, currentUser }) 
             const cls = fSt === f.id ? (f.id === 'critical' ? ' active-critical' : f.id === 'warning' ? ' active-warning' : ' active') : '';
             return <button key={f.id} className={`fbtn${cls}`} onClick={() => setFSt(f.id)}>{f.l}</button>;
           })}
-          <button className="btn btn-yellow" style={{ padding:'5px 12px', fontSize:12, borderRadius:20, marginLeft:'auto', flexShrink:0, whiteSpace:'nowrap' }} onClick={sendProductionAlert}>📲 Alerta Vencimentos 🚨</button>
+          <button className="btn btn-yellow" style={{ padding:'5px 12px', fontSize:12, borderRadius:20, marginLeft:'auto', flexShrink:0, whiteSpace:'nowrap' }} onClick={() => setExportModalOpen(true)}>📤 Exportar Relatório</button>
         </div>
       </div>
 
@@ -1496,6 +1531,34 @@ function StockTab({ stock, setStock, toast, config, fSt, setFSt, currentUser }) 
               <button className="btn btn-full" onClick={() => handleBaixa(baixaItem.id, 'venda')} style={{ background:'var(--green)', color:'#fff', padding:'14px', fontSize:15 }}>✅ Baixar por Venda (Evitou Perda)</button>
               <button className="btn btn-danger btn-full" onClick={() => handleBaixa(baixaItem.id, 'perda')} style={{ padding:'14px', fontSize:15 }}>🗑️ Baixar por Perda/Descarte</button>
               <button className="btn btn-ghost btn-full" onClick={() => setBaixaItem(null)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {exportModalOpen && (
+        <div className="modal-bg no-print" onClick={() => setExportModalOpen(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontSize:18, fontWeight:900, marginBottom:10 }}>📤 Exportar Relatório</h2>
+            <p style={{ fontSize:14, color:'var(--text2)', marginBottom:15 }}>Quais itens deseja incluir neste relatório?</p>
+            
+            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom: 20 }}>
+              {[{id:'critical', l:'🚨 Crítico (Vencendo/Vencidos)', color:'var(--red)'},
+                {id:'warning', l:'⚠️ Atenção (Validade Próxima)', color:'var(--orange)'},
+                {id:'transfer', l:'🚚 Remanejar', color:'#3b82f6'},
+                {id:'ok', l:'✅ Monitorar (Estoque Saudável)', color:'var(--green)'}
+              ].map(opt => (
+                <label key={opt.id} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'8px 12px', background:'var(--bg-elevated)', borderRadius:8, border:'1px solid var(--border)' }}>
+                  <input type="checkbox" checked={exportOpts[opt.id]} onChange={e => setExportOpts({...exportOpts, [opt.id]: e.target.checked})} style={{ width:16, height:16 }} />
+                  <span style={{ fontSize:14, fontWeight:600, color:opt.color }}>{opt.l}</span>
+                </label>
+              ))}
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <button className="btn btn-yellow btn-full" onClick={handleSendExport} style={{ padding:'12px', fontSize:15 }}>📲 Enviar para Gestor (Telegram)</button>
+              <button className="btn btn-outline btn-full" onClick={handleDownloadCSV} style={{ padding:'12px', fontSize:15 }}>📊 Baixar Planilha (CSV)</button>
+              <button className="btn btn-ghost btn-full" onClick={() => setExportModalOpen(false)}>Cancelar</button>
             </div>
           </div>
         </div>
